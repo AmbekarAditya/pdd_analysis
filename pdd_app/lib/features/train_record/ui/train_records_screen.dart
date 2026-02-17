@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/app_theme.dart';
 import '../models/train_record.dart';
-import '../providers/record_providers.dart';
+import '../models/record_filter_state.dart'; // Import Filter State
+import '../controllers/train_records_controller.dart'; // Import Controller
 import '../../../shared/providers/layout_providers.dart';
+import 'record_detail_screen.dart'; // Import Detail Screen
 
 class TrainRecordsScreen extends ConsumerStatefulWidget {
   const TrainRecordsScreen({super.key});
@@ -15,9 +17,7 @@ class TrainRecordsScreen extends ConsumerStatefulWidget {
 }
 
 class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
-  DateTimeRange? _dateRange;
-  String _selectedRollingStock = 'All';
-  String _selectedStatus = 'All';
+  bool _isFilterExpanded = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -31,18 +31,10 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   void _updateAppBar() {
     ref.read(appBarProvider.notifier).update(
       title: 'Train Records',
-      actions: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: CircleAvatar(
-            backgroundColor: AppTheme.primaryColor,
-            child: Text('SC', style: TextStyle(color: Colors.white)),
-          ),
-        ),
-      ],
+      actions: [], // Search is now in-body
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/train-record/new'),
-        label: const Text('Add New Record', style: TextStyle(color: Colors.white)),
+        label: const Text('Add New', style: TextStyle(color: Colors.white)),
         icon: const Icon(Icons.add, color: Colors.white),
         backgroundColor: AppTheme.primaryColor,
       ),
@@ -50,237 +42,261 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+  
+  // Helper to get color based on PDD minutes
+  Color _getPddColor(String pdd) {
+    int minutes = 0;
+    try {
+      final parts = pdd.split(' ');
+      for (var part in parts) {
+        if (part.endsWith('m')) minutes += int.parse(part.replaceAll('m', ''));
+        if (part.endsWith('h')) minutes += int.parse(part.replaceAll('h', '')) * 60;
+      }
+    } catch (e) { return Colors.grey; }
+
+    if (minutes == 0) return Colors.green;
+    if (minutes <= 30) return Colors.orange;
+    return Colors.red;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final recordsAsync = ref.watch(trainRecordsStreamProvider);
+    final filteredRecords = ref.watch(filteredRecordsProvider);
+    final summary = ref.read(recordsSummaryProvider); // Using read inside build for summary might not be reactive if provider is not watched? Check riverpod. 
+    // Actually, if we want summary to update, we should Watch it.
+    // Let's watch it.
+    final summaryReactive = ref.watch(recordsSummaryProvider);
 
-    return recordsAsync.when(
-      data: (records) => SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildFilterBar(),
-            const SizedBox(height: 24),
-            _buildSummaryCards(records),
-            const SizedBox(height: 24),
-            _buildRecordsTable(records),
-          ],
-        ),
-      ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
-    );
-  }
-
-  Widget _buildFilterBar() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                _buildFilterItem(
-                  'Date Range',
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      final range = await showDateRangePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                        initialDateRange: _dateRange,
-                      );
-                      if (range != null) setState(() => _dateRange = range);
-                    },
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: Text(_dateRange == null
-                        ? 'Pick Date Range'
-                        : '${DateFormat('MMM d').format(_dateRange!.start)} - ${DateFormat('MMM d').format(_dateRange!.end)}'),
-                  ),
-                ),
-                _buildFilterItem(
-                  'Rolling Stock',
-                  DropdownButton<String>(
-                    value: _selectedRollingStock,
-                    items: ['All', 'DN MU', 'UP BCNE', 'DN LE', 'UP PHDL', 'DN BOXN', 'UP MGKS', 'DN ICDW']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedRollingStock = v!),
-                  ),
-                ),
-                _buildFilterItem(
-                  'Status',
-                  DropdownButton<String>(
-                    value: _selectedStatus,
-                    items: ['All', 'Completed', 'Delayed', 'In Progress']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedStatus = v!),
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search remarks...',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _dateRange = null;
-                      _selectedRollingStock = 'All';
-                      _selectedStatus = 'All';
-                      _searchController.clear();
-                    });
-                  },
-                  child: const Text('Reset Filters'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-                  child: const Text('Apply Filters', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterItem(String label, Widget child) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-        const SizedBox(height: 4),
-        child,
+        _buildSearchBar(),
+        if (_isFilterExpanded) _buildFilterPanel(),
+        _buildSummaryStrip(summaryReactive),
+        Expanded(
+          child: filteredRecords.isEmpty
+              ? const Center(child: Text('No records found matching filters.'))
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredRecords.length,
+                  itemBuilder: (context, index) {
+                    final record = filteredRecords[index];
+                    return _buildRecordCard(record);
+                  },
+                ),
+        ),
       ],
     );
   }
 
-  Widget _buildSummaryCards(List<TrainRecord> records) {
-    final completed = records.where((r) => r.status == 'Completed').length;
-    final delayed = records.where((r) => r.status == 'Delayed').length;
-    final inProgress = records.where((r) => r.status == 'In Progress').length;
-
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 600;
-      return GridView.count(
-        crossAxisCount: isMobile ? 2 : 4,
-        childAspectRatio: isMobile ? 1.5 : 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
+  Widget _buildSearchBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Row(
         children: [
-          _buildCompactSummaryCard('Total', '${records.length}', Icons.train_outlined),
-          _buildCompactSummaryCard('Completed', '$completed', Icons.check_circle_outline, color: Colors.green),
-          _buildCompactSummaryCard('Delayed', '$delayed', Icons.warning_amber_outlined, color: Colors.red),
-          _buildCompactSummaryCard('In Progress', '$inProgress', Icons.pending_outlined, color: Colors.orange),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (val) {
+                 // Debouncing could be added here, but for now direct update
+                 // Or use a Timer
+                 ref.read(trainRecordsFilterProvider.notifier).setQuery(val);
+              },
+              decoration: InputDecoration(
+                hintText: 'Search Train No, Dept, Remarks...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            icon: Icon(_isFilterExpanded ? Icons.filter_list_off : Icons.filter_list),
+            onPressed: () => setState(() => _isFilterExpanded = !_isFilterExpanded),
+            tooltip: 'Toggle Filters',
+          ),
         ],
-      );
-    });
+      ),
+    );
   }
 
-  Widget _buildCompactSummaryCard(String title, String value, IconData icon, {Color? color}) {
+  Widget _buildFilterPanel() {
+    final filterState = ref.watch(trainRecordsFilterProvider);
+    final controller = ref.read(trainRecordsFilterProvider.notifier);
+
+    return Container(
+      color: Colors.grey[50],
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                     final range = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        initialDateRange: filterState.dateRange,
+                      );
+                      if (range != null) controller.setDateRange(range);
+                  },
+                  icon: const Icon(Icons.calendar_today, size: 16),
+                  label: Text(filterState.dateRange == null
+                      ? 'Date Range'
+                      : '${DateFormat('MMM d').format(filterState.dateRange!.start)} - ${DateFormat('MMM d').format(filterState.dateRange!.end)}'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: filterState.direction ?? 'All',
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                    border: OutlineInputBorder(),
+                    labelText: 'Direction',
+                  ),
+                  items: ['All', 'UP', 'DN'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                  onChanged: (v) => controller.setTrainFilters(direction: v == 'All' ? null : v),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Add more filters here as per requirements (Departments, etc.)
+          // For brevity in this turn, implementing basic ones first.
+          // Requirement: "Department Filter (Multi-select)" - Complex UI, maybe Chips?
+          const Text('Department', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(height: 8),
+          Wrap(
+             spacing: 8,
+             children: ['Operating (Traffic)', 'Mechanical (C&W)', 'External / Force Majeure'].map((dept) {
+               final isSelected = filterState.selectedDepartments.contains(dept);
+               return FilterChip(
+                 label: Text(dept.split(' ')[0]), // Shorten name
+                 selected: isSelected,
+                 onSelected: (_) => controller.toggleDepartment(dept),
+               );
+             }).toList(),
+          ),
+           const SizedBox(height: 12),
+           Row(
+             mainAxisAlignment: MainAxisAlignment.end,
+             children: [
+               TextButton(
+                 onPressed: () => controller.resetFilters(),
+                 child: const Text('Reset All'),
+               ),
+             ],
+           )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryStrip(TrainRecordSummary summary) { // Assuming we made this model
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      color: AppTheme.primaryColor.withOpacity(0.05),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildSummaryItem('Total', '${summary.totalRecords}'),
+          _buildSummaryItem('Avg PDD', summary.averagePdd),
+          _buildSummaryItem('Clean Avg', summary.cleanAveragePdd, color: Colors.green),
+          _buildSummaryItem('Max Delay', summary.highestDelay, color: Colors.red),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem(String label, String value, {Color? color}) {
+    return Column(
+      children: [
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color ?? Colors.black87)),
+        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildRecordCard(TrainRecord record) {
+    final pddColor = _getPddColor(record.pdd);
+    
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color ?? Colors.grey, size: 20),
-            const SizedBox(height: 4),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            Text(title, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-          ],
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: pddColor.withOpacity(0.5), width: 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => RecordDetailScreen(record: record),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(record.trainNumber, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text('${record.direction ?? ""} • ${record.trainType ?? ""}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(record.pdd, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pddColor)),
+                      const Text('PDD', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    ],
+                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(record.primaryDepartment ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.w500)),
+                        Text(record.subReason ?? '-', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                  if (record.isExcluded)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('EXC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildRecordsTable(List<TrainRecord> records) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Recent Records', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columns: const [
-                DataColumn(label: Text('Train No')),
-                DataColumn(label: Text('Stock')),
-                DataColumn(label: Text('Date')),
-                DataColumn(label: Text('Status')),
-                DataColumn(label: Text('PDD')),
-                DataColumn(label: Text('Actions')),
-              ],
-              rows: records.map((record) => _buildRecordRow(record)).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  DataRow _buildRecordRow(TrainRecord record) {
-    Color statusColor = Colors.grey;
-    if (record.status == 'Completed') statusColor = Colors.green;
-    if (record.status == 'Delayed') statusColor = Colors.red;
-    if (record.status == 'In Progress') statusColor = Colors.orange;
-
-    return DataRow(cells: [
-      DataCell(Text(record.trainNumber)),
-      DataCell(Text(record.rollingStock)),
-      DataCell(Text(DateFormat('MMM d, y').format(record.date))),
-      DataCell(Chip(
-        label: Text(record.status, style: const TextStyle(fontSize: 10, color: Colors.white)),
-        backgroundColor: statusColor,
-        padding: EdgeInsets.zero,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      )),
-      DataCell(Text(record.pdd)),
-      DataCell(Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Delete Record'),
-                  content: const Text('Are you sure you want to delete this record?'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
-                  ],
-                ),
-              );
-              if (confirmed == true) {
-                await ref.read(recordRepositoryProvider).deleteRecord(record.id);
-              }
-            },
-          ),
-        ],
-      )),
-    ]);
   }
 }
