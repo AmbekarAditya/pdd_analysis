@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/record_filter_state.dart';
 import '../models/train_record.dart';
 import '../providers/record_providers.dart';
 
-// Notifier for the Filter State (Riverpod 2.0+ style)
+// Notifier for the Filter State
 class TrainRecordsController extends Notifier<RecordFilterState> {
   @override
   RecordFilterState build() {
@@ -15,22 +14,17 @@ class TrainRecordsController extends Notifier<RecordFilterState> {
     state = state.copyWith(query: query);
   }
 
-  void setDateRange(DateTimeRange? range) {
-    state = state.copyWith(dateRange: range);
-  }
-
-  void setTrainFilters({
-    String? trainNumber,
-    String? direction,
-    String? trainType,
-    String? movementType,
-  }) {
-    state = state.copyWith(
-      trainNumber: trainNumber,
-      direction: direction,
-      trainType: trainType,
-      movementType: movementType,
-    );
+  void toggleDateFilter(DateFilterPreset preset) {
+    // If clicking the same preset, toggle off to 'all' (unless it's 'all' already)
+    // Actually typically chips: if "Today" is active and clicked, it might turn off.
+    // If "Today" is inactive and clicked, it becomes active.
+    // Since we only allow ONE date filter at a time (radio behavior usually for time ranges), 
+    // let's stick to simple replacement.
+    if (state.dateFilter == preset && preset != DateFilterPreset.all) {
+      state = state.copyWith(dateFilter: DateFilterPreset.all);
+    } else {
+      state = state.copyWith(dateFilter: preset);
+    }
   }
 
   void toggleDepartment(String department) {
@@ -43,22 +37,14 @@ class TrainRecordsController extends Notifier<RecordFilterState> {
     state = state.copyWith(selectedDepartments: current);
   }
 
-  void toggleSubReason(String reason) {
-    final current = List<String>.from(state.selectedSubReasons);
-    if (current.contains(reason)) {
-      current.remove(reason);
+  void toggleStatusFilter(RecordStatusFilter filter) {
+    final current = List<RecordStatusFilter>.from(state.selectedStatusFilters);
+    if (current.contains(filter)) {
+      current.remove(filter);
     } else {
-      current.add(reason);
+      current.add(filter);
     }
-    state = state.copyWith(selectedSubReasons: current);
-  }
-
-  void setPddRange(RangeValues? range) {
-    state = state.copyWith(pddRange: range);
-  }
-
-  void setExcludeFilter(ExcludeFilter filter) {
-    state = state.copyWith(excludeFilter: filter);
+    state = state.copyWith(selectedStatusFilters: current);
   }
 
   void resetFilters() {
@@ -77,7 +63,82 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
   return allRecordsAsync.maybeWhen(
     data: (records) {
       return records.where((record) {
-        // 1. Global Search
+        // 1. Date Filter
+        final now = DateTime.now();
+        final recordDate = record.date;
+        bool dateMatch = true;
+        
+        // Normalize dates to remove time component for comparison if needed, 
+        // but record.date is usually DateTime (start of day?) or includes time.
+        // Let's assume comparisons based on day.
+        final today = DateTime(now.year, now.month, now.day);
+        final rDate = DateTime(recordDate.year, recordDate.month, recordDate.day);
+        
+        switch (filterState.dateFilter) {
+          case DateFilterPreset.today:
+             dateMatch = rDate.isAtSameMomentAs(today);
+             break;
+          case DateFilterPreset.last7Days:
+             final sevenDaysAgo = today.subtract(const Duration(days: 7));
+             dateMatch = rDate.isAfter(sevenDaysAgo) || rDate.isAtSameMomentAs(sevenDaysAgo);
+             break;
+          case DateFilterPreset.thisMonth:
+             dateMatch = rDate.year == today.year && rDate.month == today.month;
+             break;
+          case DateFilterPreset.all:
+          default:
+             dateMatch = true;
+             break;
+        }
+        if (!dateMatch) return false;
+
+        // 2. Department Filter (OR logic: if record has Dep A AND Dep A is selected -> keep)
+        // If selection is empty, show all.
+        if (filterState.selectedDepartments.isNotEmpty) {
+          if (record.primaryDepartment == null ||
+              !filterState.selectedDepartments.contains(record.primaryDepartment)) {
+            return false;
+          }
+        }
+
+        // 3. Status Filters (Mixed logic)
+        // Separate status filters into sets
+        final statusFilters = filterState.selectedStatusFilters;
+        if (statusFilters.isNotEmpty) {
+          bool keep = true;
+          
+          // A. Delay Magnitude (High vs Zero) - OR logic if both present?
+          // "High Delay" (>30), "Zero Delay" (==0).
+          // If User selects "High Delay", we filter for >30.
+          // If User also selects "Zero Delay", we filter for (>30 OR ==0).
+          final hasHighDelay = statusFilters.contains(RecordStatusFilter.highDelay);
+          final hasZeroDelay = statusFilters.contains(RecordStatusFilter.zeroDelay);
+          
+          if (hasHighDelay || hasZeroDelay) {
+             final minutes = _parsePddMinutes(record.pdd);
+             bool matchesDelay = false;
+             if (hasHighDelay && minutes > 30) matchesDelay = true;
+             if (hasZeroDelay && minutes == 0) matchesDelay = true;
+             
+             if (!matchesDelay) return false;
+          }
+
+          // B. Exclusion (Excluded vs Non-Excluded) - OR logic logic if both present?
+          // If User selects "Excluded", keep excluded.
+          // If User selects "Non-Excluded", keep non-excluded.
+          // If both, keep both (effectively no filter on exclusion).
+          final hasExcluded = statusFilters.contains(RecordStatusFilter.excluded);
+          final hasNonExcluded = statusFilters.contains(RecordStatusFilter.nonExcluded);
+          
+          if (hasExcluded && !hasNonExcluded) {
+            if (!record.isExcluded) return false;
+          } else if (hasNonExcluded && !hasExcluded) {
+            if (record.isExcluded) return false;
+          }
+          // If both or neither, ignore.
+        }
+
+        // 4. Global Search
         if (filterState.query.isNotEmpty) {
           final q = filterState.query.toLowerCase();
           final matches = record.trainNumber.toLowerCase().contains(q) ||
@@ -86,71 +147,6 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
               (record.remarks?.toLowerCase().contains(q) ?? false) ||
               (record.movementType?.toLowerCase().contains(q) ?? false);
           if (!matches) return false;
-        }
-
-        // 2. Date Range
-        if (filterState.dateRange != null) {
-          if (record.date.isBefore(filterState.dateRange!.start) ||
-              record.date.isAfter(filterState.dateRange!.end.add(const Duration(days: 1)))) {
-            return false;
-          }
-        }
-
-        // 3. Train Filters
-        if (filterState.trainNumber != null &&
-            filterState.trainNumber!.isNotEmpty &&
-            !record.trainNumber.contains(filterState.trainNumber!)) {
-          return false;
-        }
-        if (filterState.direction != null &&
-             filterState.direction != 'All' && 
-            record.direction != filterState.direction) {
-          return false;
-        }
-        if (filterState.trainType != null &&
-            filterState.trainType != 'All' &&
-            record.trainType != filterState.trainType) {
-          return false;
-        }
-        if (filterState.movementType != null &&
-            filterState.movementType != 'All' &&
-            record.movementType != filterState.movementType) {
-          return false;
-        }
-
-        // 4. Department Filter
-        if (filterState.selectedDepartments.isNotEmpty) {
-          if (record.primaryDepartment == null ||
-              !filterState.selectedDepartments.contains(record.primaryDepartment)) {
-            return false;
-          }
-        }
-
-        // 5. Sub-Reason Filter
-        if (filterState.selectedSubReasons.isNotEmpty) {
-          if (record.subReason == null ||
-              !filterState.selectedSubReasons.contains(record.subReason)) {
-            return false;
-          }
-        }
-
-        // 6. PDD Range
-        if (filterState.pddRange != null) {
-          final pddMinutes = _parsePddMinutes(record.pdd);
-          if (pddMinutes < filterState.pddRange!.start ||
-              pddMinutes > filterState.pddRange!.end) {
-            return false;
-          }
-        }
-
-        // 7. Exclude Filter
-        if (filterState.excludeFilter == ExcludeFilter.excludedOnly &&
-            !record.isExcluded) {
-          return false;
-        }
-        if (filterState.excludeFilter == ExcludeFilter.nonExcludedOnly &&
-            record.isExcluded) {
-          return false;
         }
 
         return true;
@@ -179,24 +175,7 @@ int _parsePddMinutes(String pdd) {
   }
 }
 
-// Summary Model
-class TrainRecordSummary {
-  final int totalRecords;
-  final String totalPdd;
-  final String averagePdd; // Raw average
-  final String cleanAveragePdd; // Excluding excluded records
-  final String highestDelay; // Max PDD
-
-  TrainRecordSummary({
-    required this.totalRecords,
-    required this.totalPdd,
-    required this.averagePdd,
-    required this.cleanAveragePdd,
-    required this.highestDelay,
-  });
-}
-
-// Computed Provider: Summary
+// Summary Logic
 final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
   final records = ref.watch(filteredRecordsProvider);
 
@@ -234,6 +213,22 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
     highestDelay: _formatMinutes(maxMinutes),
   );
 });
+
+class TrainRecordSummary {
+  final int totalRecords;
+  final String totalPdd;
+  final String averagePdd; // Raw average
+  final String cleanAveragePdd; // Excluding excluded records
+  final String highestDelay; // Max PDD
+
+  TrainRecordSummary({
+    required this.totalRecords,
+    required this.totalPdd,
+    required this.averagePdd,
+    required this.cleanAveragePdd,
+    required this.highestDelay,
+  });
+}
 
 String _formatMinutes(int totalMinutes) {
   final h = totalMinutes ~/ 60;

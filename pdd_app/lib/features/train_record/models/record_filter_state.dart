@@ -1,56 +1,33 @@
 import 'package:flutter/material.dart';
 
-enum ExcludeFilter { all, excludedOnly, nonExcludedOnly }
+enum DateFilterPreset { all, today, last7Days, thisMonth }
+enum RecordStatusFilter { excluded, nonExcluded, highDelay, zeroDelay }
 
 @immutable
 class RecordFilterState {
   final String query;
-  final DateTimeRange? dateRange;
-  final String? trainNumber;
-  final String? direction;
-  final String? trainType;
-  final String? movementType;
+  final DateFilterPreset dateFilter;
   final List<String> selectedDepartments;
-  final List<String> selectedSubReasons;
-  final RangeValues? pddRange;
-  final ExcludeFilter excludeFilter;
+  final List<RecordStatusFilter> selectedStatusFilters;
 
   const RecordFilterState({
     this.query = '',
-    this.dateRange,
-    this.trainNumber,
-    this.direction,
-    this.trainType,
-    this.movementType,
+    this.dateFilter = DateFilterPreset.all,
     this.selectedDepartments = const [],
-    this.selectedSubReasons = const [],
-    this.pddRange,
-    this.excludeFilter = ExcludeFilter.all,
+    this.selectedStatusFilters = const [],
   });
 
   RecordFilterState copyWith({
     String? query,
-    DateTimeRange? dateRange,
-    String? trainNumber,
-    String? direction,
-    String? trainType,
-    String? movementType,
+    DateFilterPreset? dateFilter,
     List<String>? selectedDepartments,
-    List<String>? selectedSubReasons,
-    RangeValues? pddRange,
-    ExcludeFilter? excludeFilter,
+    List<RecordStatusFilter>? selectedStatusFilters,
   }) {
     return RecordFilterState(
       query: query ?? this.query,
-      dateRange: dateRange ?? this.dateRange,
-      trainNumber: trainNumber ?? this.trainNumber,
-      direction: direction ?? this.direction,
-      trainType: trainType ?? this.trainType,
-      movementType: movementType ?? this.movementType,
+      dateFilter: dateFilter ?? this.dateFilter,
       selectedDepartments: selectedDepartments ?? this.selectedDepartments,
-      selectedSubReasons: selectedSubReasons ?? this.selectedSubReasons,
-      pddRange: pddRange ?? this.pddRange,
-      excludeFilter: excludeFilter ?? this.excludeFilter,
+      selectedStatusFilters: selectedStatusFilters ?? this.selectedStatusFilters,
     );
   }
 
@@ -59,30 +36,18 @@ class RecordFilterState {
     if (identical(this, other)) return true;
     return other is RecordFilterState &&
         other.query == query &&
-        other.dateRange == dateRange &&
-        other.trainNumber == trainNumber &&
-        other.direction == direction &&
-        other.trainType == trainType &&
-        other.movementType == movementType &&
-        other.selectedDepartments == selectedDepartments &&
-        other.selectedSubReasons == selectedSubReasons &&
-        other.pddRange == pddRange &&
-        other.excludeFilter == excludeFilter;
+        other.dateFilter == dateFilter &&
+        other.selectedDepartments == selectedDepartments && // List equality check needed usually, but assuming immutable list ref change
+        other.selectedStatusFilters == selectedStatusFilters;
   }
 
   @override
   int get hashCode {
     return Object.hash(
       query,
-      dateRange,
-      trainNumber,
-      direction,
-      trainType,
-      movementType,
-      selectedDepartments,
-      selectedSubReasons,
-      pddRange,
-      excludeFilter,
+      dateFilter,
+      Object.hashAll(selectedDepartments),
+      Object.hashAll(selectedStatusFilters),
     );
   }
 }
