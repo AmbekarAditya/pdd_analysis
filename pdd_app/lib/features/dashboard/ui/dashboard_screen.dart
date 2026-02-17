@@ -8,6 +8,7 @@ import '../../../core/utils/pdd_calculator.dart';
 import '../../train_record/models/train_record.dart';
 import '../../train_record/models/daily_stats.dart';
 import '../../train_record/providers/record_providers.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/providers/layout_providers.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -69,6 +70,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           r.date.year == _selectedDate.year && 
           r.date.month == _selectedDate.month).toList();
           
+        if (filtered.isEmpty) {
+          return _buildEmptyState();
+        }
+        
         final dailyStats = _processRecords(filtered);
         
         return SingleChildScrollView(
@@ -116,6 +121,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }).toList();
   }
 
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.analytics_outlined, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'No records found for ${DateFormat('MMMM yyyy').format(_selectedDate)}',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600], fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start by capturing a new train record.',
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/train-record/new'),
+            icon: const Icon(Icons.add, color: Colors.white),
+            label: const Text('Add New Record', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummaryCards(List<TrainRecord> records) {
     if (records.isEmpty) {
       return const Center(child: Text('No data for this month'));
@@ -150,7 +186,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             'Trains Below 45 Mins',
             '$perc%',
             Icons.check_circle_outline,
-            isPositive: true,
+            backgroundColor: _getPerformanceColor(double.tryParse(perc) ?? 0),
+            textColor: (double.tryParse(perc) ?? 0) > 0 ? Colors.white : null,
+            iconColor: (double.tryParse(perc) ?? 0) > 0 ? Colors.white70 : null,
           ),
         ],
       );
@@ -161,9 +199,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     String title,
     String value,
     IconData icon, {
-    bool? isPositive,
+    Color? backgroundColor,
+    Color? textColor,
+    Color? iconColor,
   }) {
     return Card(
+      color: backgroundColor,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -173,16 +214,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                Icon(icon, color: Colors.grey, size: 20),
+                Text(title, style: TextStyle(fontSize: 14, color: textColor?.withOpacity(0.8) ?? Colors.grey)),
+                Icon(icon, color: iconColor ?? Colors.grey, size: 20),
               ],
             ),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: textColor)),
           ],
         ),
       ),
     );
+  }
+
+  Color? _getPerformanceColor(double percentage) {
+    if (percentage >= 90) return Colors.green[600];
+    if (percentage >= 70) return Colors.orange[600];
+    if (percentage > 0) return Colors.red[600];
+    return null;
   }
 
   Widget _buildCharts(List<DailyStats> stats) {
@@ -218,6 +266,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   gridData: const FlGridData(show: false),
                   titlesData: _getTitlesData(stats),
                   borderData: FlBorderData(show: false),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => AppTheme.primaryColor,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                        return BarTooltipItem(
+                          rod.toY.round().toString(),
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                  ),
                   barGroups: stats.asMap().entries.map((e) {
                     return BarChartGroupData(
                       x: e.key,
@@ -252,9 +311,39 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Expanded(
               child: LineChart(
                 LineChartData(
-                  gridData: const FlGridData(show: true),
+                  gridData: const FlGridData(show: true, drawVerticalLine: false),
                   titlesData: _getTitlesData(stats),
                   borderData: FlBorderData(show: true, border: Border.all(color: Colors.grey[300]!)),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (_) => AppTheme.secondaryColor,
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          return LineTooltipItem(
+                            '${spot.y.round()} min',
+                            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          );
+                        }).toList();
+                      },
+                    ),
+                  ),
+                  extraLinesData: ExtraLinesData(
+                    horizontalLines: [
+                      HorizontalLine(
+                        y: 45,
+                        color: Colors.red.withOpacity(0.5),
+                        strokeWidth: 2,
+                        dashArray: [5, 5],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          alignment: Alignment.topRight,
+                          padding: const EdgeInsets.only(right: 5, bottom: 5),
+                          style: TextStyle(color: Colors.red.withOpacity(0.8), fontSize: 10, fontWeight: FontWeight.bold),
+                          labelResolver: (line) => 'Target: 45m',
+                        ),
+                      ),
+                    ],
+                  ),
                   lineBarsData: [
                     LineChartBarData(
                       spots: stats.asMap().entries.map((e) {
@@ -264,7 +353,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       color: AppTheme.secondaryColor,
                       barWidth: 3,
                       dotData: const FlDotData(show: true),
-                      belowBarData: BarAreaData(show: true, color: AppTheme.secondaryColor.withValues(alpha: 0.1)),
+                      belowBarData: BarAreaData(show: true, color: AppTheme.secondaryColor.withOpacity(0.1)),
                     ),
                   ],
                 ),
