@@ -167,6 +167,22 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_excluded" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _pddMinutesMeta =
+      const VerificationMeta('pddMinutes');
+  @override
+  late final GeneratedColumn<int> pddMinutes = GeneratedColumn<int>(
+      'pdd_minutes', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _crewTimeMinutesMeta =
+      const VerificationMeta('crewTimeMinutes');
+  @override
+  late final GeneratedColumn<int> crewTimeMinutes = GeneratedColumn<int>(
+      'crew_time_minutes', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -193,7 +209,9 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
         primaryDepartment,
         subReason,
         crewTime,
-        isExcluded
+        isExcluded,
+        pddMinutes,
+        crewTimeMinutes
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -334,6 +352,18 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
           isExcluded.isAcceptableOrUnknown(
               data['is_excluded']!, _isExcludedMeta));
     }
+    if (data.containsKey('pdd_minutes')) {
+      context.handle(
+          _pddMinutesMeta,
+          pddMinutes.isAcceptableOrUnknown(
+              data['pdd_minutes']!, _pddMinutesMeta));
+    }
+    if (data.containsKey('crew_time_minutes')) {
+      context.handle(
+          _crewTimeMinutesMeta,
+          crewTimeMinutes.isAcceptableOrUnknown(
+              data['crew_time_minutes']!, _crewTimeMinutesMeta));
+    }
     return context;
   }
 
@@ -393,6 +423,10 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
           .read(DriftSqlType.string, data['${effectivePrefix}crew_time']),
       isExcluded: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_excluded'])!,
+      pddMinutes: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}pdd_minutes'])!,
+      crewTimeMinutes: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}crew_time_minutes'])!,
     );
   }
 
@@ -429,6 +463,8 @@ class TrainRecordEntry extends DataClass
   final String? subReason;
   final String? crewTime;
   final bool isExcluded;
+  final int pddMinutes;
+  final int crewTimeMinutes;
   const TrainRecordEntry(
       {required this.id,
       required this.date,
@@ -454,7 +490,9 @@ class TrainRecordEntry extends DataClass
       this.primaryDepartment,
       this.subReason,
       this.crewTime,
-      required this.isExcluded});
+      required this.isExcluded,
+      required this.pddMinutes,
+      required this.crewTimeMinutes});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -519,6 +557,8 @@ class TrainRecordEntry extends DataClass
       map['crew_time'] = Variable<String>(crewTime);
     }
     map['is_excluded'] = Variable<bool>(isExcluded);
+    map['pdd_minutes'] = Variable<int>(pddMinutes);
+    map['crew_time_minutes'] = Variable<int>(crewTimeMinutes);
     return map;
   }
 
@@ -585,6 +625,8 @@ class TrainRecordEntry extends DataClass
           ? const Value.absent()
           : Value(crewTime),
       isExcluded: Value(isExcluded),
+      pddMinutes: Value(pddMinutes),
+      crewTimeMinutes: Value(crewTimeMinutes),
     );
   }
 
@@ -619,6 +661,8 @@ class TrainRecordEntry extends DataClass
       subReason: serializer.fromJson<String?>(json['subReason']),
       crewTime: serializer.fromJson<String?>(json['crewTime']),
       isExcluded: serializer.fromJson<bool>(json['isExcluded']),
+      pddMinutes: serializer.fromJson<int>(json['pddMinutes']),
+      crewTimeMinutes: serializer.fromJson<int>(json['crewTimeMinutes']),
     );
   }
   @override
@@ -650,6 +694,8 @@ class TrainRecordEntry extends DataClass
       'subReason': serializer.toJson<String?>(subReason),
       'crewTime': serializer.toJson<String?>(crewTime),
       'isExcluded': serializer.toJson<bool>(isExcluded),
+      'pddMinutes': serializer.toJson<int>(pddMinutes),
+      'crewTimeMinutes': serializer.toJson<int>(crewTimeMinutes),
     };
   }
 
@@ -678,7 +724,9 @@ class TrainRecordEntry extends DataClass
           Value<String?> primaryDepartment = const Value.absent(),
           Value<String?> subReason = const Value.absent(),
           Value<String?> crewTime = const Value.absent(),
-          bool? isExcluded}) =>
+          bool? isExcluded,
+          int? pddMinutes,
+          int? crewTimeMinutes}) =>
       TrainRecordEntry(
         id: id ?? this.id,
         date: date ?? this.date,
@@ -716,6 +764,8 @@ class TrainRecordEntry extends DataClass
         subReason: subReason.present ? subReason.value : this.subReason,
         crewTime: crewTime.present ? crewTime.value : this.crewTime,
         isExcluded: isExcluded ?? this.isExcluded,
+        pddMinutes: pddMinutes ?? this.pddMinutes,
+        crewTimeMinutes: crewTimeMinutes ?? this.crewTimeMinutes,
       );
   TrainRecordEntry copyWithCompanion(TrainRecordEntriesCompanion data) {
     return TrainRecordEntry(
@@ -764,6 +814,11 @@ class TrainRecordEntry extends DataClass
       crewTime: data.crewTime.present ? data.crewTime.value : this.crewTime,
       isExcluded:
           data.isExcluded.present ? data.isExcluded.value : this.isExcluded,
+      pddMinutes:
+          data.pddMinutes.present ? data.pddMinutes.value : this.pddMinutes,
+      crewTimeMinutes: data.crewTimeMinutes.present
+          ? data.crewTimeMinutes.value
+          : this.crewTimeMinutes,
     );
   }
 
@@ -794,7 +849,9 @@ class TrainRecordEntry extends DataClass
           ..write('primaryDepartment: $primaryDepartment, ')
           ..write('subReason: $subReason, ')
           ..write('crewTime: $crewTime, ')
-          ..write('isExcluded: $isExcluded')
+          ..write('isExcluded: $isExcluded, ')
+          ..write('pddMinutes: $pddMinutes, ')
+          ..write('crewTimeMinutes: $crewTimeMinutes')
           ..write(')'))
         .toString();
   }
@@ -825,7 +882,9 @@ class TrainRecordEntry extends DataClass
         primaryDepartment,
         subReason,
         crewTime,
-        isExcluded
+        isExcluded,
+        pddMinutes,
+        crewTimeMinutes
       ]);
   @override
   bool operator ==(Object other) =>
@@ -855,7 +914,9 @@ class TrainRecordEntry extends DataClass
           other.primaryDepartment == this.primaryDepartment &&
           other.subReason == this.subReason &&
           other.crewTime == this.crewTime &&
-          other.isExcluded == this.isExcluded);
+          other.isExcluded == this.isExcluded &&
+          other.pddMinutes == this.pddMinutes &&
+          other.crewTimeMinutes == this.crewTimeMinutes);
 }
 
 class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
@@ -884,6 +945,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
   final Value<String?> subReason;
   final Value<String?> crewTime;
   final Value<bool> isExcluded;
+  final Value<int> pddMinutes;
+  final Value<int> crewTimeMinutes;
   const TrainRecordEntriesCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -910,6 +973,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     this.subReason = const Value.absent(),
     this.crewTime = const Value.absent(),
     this.isExcluded = const Value.absent(),
+    this.pddMinutes = const Value.absent(),
+    this.crewTimeMinutes = const Value.absent(),
   });
   TrainRecordEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -937,6 +1002,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     this.subReason = const Value.absent(),
     this.crewTime = const Value.absent(),
     this.isExcluded = const Value.absent(),
+    this.pddMinutes = const Value.absent(),
+    this.crewTimeMinutes = const Value.absent(),
   })  : date = Value(date),
         trainNumber = Value(trainNumber),
         rollingStock = Value(rollingStock);
@@ -966,6 +1033,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     Expression<String>? subReason,
     Expression<String>? crewTime,
     Expression<bool>? isExcluded,
+    Expression<int>? pddMinutes,
+    Expression<int>? crewTimeMinutes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -993,6 +1062,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       if (subReason != null) 'sub_reason': subReason,
       if (crewTime != null) 'crew_time': crewTime,
       if (isExcluded != null) 'is_excluded': isExcluded,
+      if (pddMinutes != null) 'pdd_minutes': pddMinutes,
+      if (crewTimeMinutes != null) 'crew_time_minutes': crewTimeMinutes,
     });
   }
 
@@ -1021,7 +1092,9 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       Value<String?>? primaryDepartment,
       Value<String?>? subReason,
       Value<String?>? crewTime,
-      Value<bool>? isExcluded}) {
+      Value<bool>? isExcluded,
+      Value<int>? pddMinutes,
+      Value<int>? crewTimeMinutes}) {
     return TrainRecordEntriesCompanion(
       id: id ?? this.id,
       date: date ?? this.date,
@@ -1048,6 +1121,8 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       subReason: subReason ?? this.subReason,
       crewTime: crewTime ?? this.crewTime,
       isExcluded: isExcluded ?? this.isExcluded,
+      pddMinutes: pddMinutes ?? this.pddMinutes,
+      crewTimeMinutes: crewTimeMinutes ?? this.crewTimeMinutes,
     );
   }
 
@@ -1129,6 +1204,12 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     if (isExcluded.present) {
       map['is_excluded'] = Variable<bool>(isExcluded.value);
     }
+    if (pddMinutes.present) {
+      map['pdd_minutes'] = Variable<int>(pddMinutes.value);
+    }
+    if (crewTimeMinutes.present) {
+      map['crew_time_minutes'] = Variable<int>(crewTimeMinutes.value);
+    }
     return map;
   }
 
@@ -1159,7 +1240,9 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
           ..write('primaryDepartment: $primaryDepartment, ')
           ..write('subReason: $subReason, ')
           ..write('crewTime: $crewTime, ')
-          ..write('isExcluded: $isExcluded')
+          ..write('isExcluded: $isExcluded, ')
+          ..write('pddMinutes: $pddMinutes, ')
+          ..write('crewTimeMinutes: $crewTimeMinutes')
           ..write(')'))
         .toString();
   }
@@ -1204,6 +1287,8 @@ typedef $$TrainRecordEntriesTableCreateCompanionBuilder
   Value<String?> subReason,
   Value<String?> crewTime,
   Value<bool> isExcluded,
+  Value<int> pddMinutes,
+  Value<int> crewTimeMinutes,
 });
 typedef $$TrainRecordEntriesTableUpdateCompanionBuilder
     = TrainRecordEntriesCompanion Function({
@@ -1232,6 +1317,8 @@ typedef $$TrainRecordEntriesTableUpdateCompanionBuilder
   Value<String?> subReason,
   Value<String?> crewTime,
   Value<bool> isExcluded,
+  Value<int> pddMinutes,
+  Value<int> crewTimeMinutes,
 });
 
 class $$TrainRecordEntriesTableFilterComposer
@@ -1321,6 +1408,13 @@ class $$TrainRecordEntriesTableFilterComposer
 
   ColumnFilters<bool> get isExcluded => $composableBuilder(
       column: $table.isExcluded, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get pddMinutes => $composableBuilder(
+      column: $table.pddMinutes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get crewTimeMinutes => $composableBuilder(
+      column: $table.crewTimeMinutes,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TrainRecordEntriesTableOrderingComposer
@@ -1414,6 +1508,13 @@ class $$TrainRecordEntriesTableOrderingComposer
 
   ColumnOrderings<bool> get isExcluded => $composableBuilder(
       column: $table.isExcluded, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get pddMinutes => $composableBuilder(
+      column: $table.pddMinutes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get crewTimeMinutes => $composableBuilder(
+      column: $table.crewTimeMinutes,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TrainRecordEntriesTableAnnotationComposer
@@ -1499,6 +1600,12 @@ class $$TrainRecordEntriesTableAnnotationComposer
 
   GeneratedColumn<bool> get isExcluded => $composableBuilder(
       column: $table.isExcluded, builder: (column) => column);
+
+  GeneratedColumn<int> get pddMinutes => $composableBuilder(
+      column: $table.pddMinutes, builder: (column) => column);
+
+  GeneratedColumn<int> get crewTimeMinutes => $composableBuilder(
+      column: $table.crewTimeMinutes, builder: (column) => column);
 }
 
 class $$TrainRecordEntriesTableTableManager extends RootTableManager<
@@ -1554,6 +1661,8 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             Value<String?> subReason = const Value.absent(),
             Value<String?> crewTime = const Value.absent(),
             Value<bool> isExcluded = const Value.absent(),
+            Value<int> pddMinutes = const Value.absent(),
+            Value<int> crewTimeMinutes = const Value.absent(),
           }) =>
               TrainRecordEntriesCompanion(
             id: id,
@@ -1581,6 +1690,8 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             subReason: subReason,
             crewTime: crewTime,
             isExcluded: isExcluded,
+            pddMinutes: pddMinutes,
+            crewTimeMinutes: crewTimeMinutes,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1608,6 +1719,8 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             Value<String?> subReason = const Value.absent(),
             Value<String?> crewTime = const Value.absent(),
             Value<bool> isExcluded = const Value.absent(),
+            Value<int> pddMinutes = const Value.absent(),
+            Value<int> crewTimeMinutes = const Value.absent(),
           }) =>
               TrainRecordEntriesCompanion.insert(
             id: id,
@@ -1635,6 +1748,8 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             subReason: subReason,
             crewTime: crewTime,
             isExcluded: isExcluded,
+            pddMinutes: pddMinutes,
+            crewTimeMinutes: crewTimeMinutes,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

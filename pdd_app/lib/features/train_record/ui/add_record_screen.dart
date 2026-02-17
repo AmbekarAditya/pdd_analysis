@@ -44,22 +44,22 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
 
   // --- 3. Delay Attribution ---
   String? _subReason;
-  String _primaryDepartment = 'Auto-detected'; // Read-only
+  Department _primaryDepartment = Department.unknown; // Enum based
 
   // Mapping from Department -> List of Sub-Reasons
-  final Map<String, List<String>> _departmentReasonMap = {
-    'Operating (Traffic)': ['Path unavailable', 'Crossing', 'Precedence', 'Platform unavailable'],
-    'Mechanical (C&W)': ['Brake binding', 'Pipe disconnection', 'Hot axle', 'Spring breakage'],
-    'Electrical (TRD / Loco)': ['OHE snap', 'Pantograph broken', 'Loco failure', 'No tension'],
-    'Signalling & Telecom (S&T)': ['Signal failure', 'Point failure', 'Track circuit failure'],
-    'Commercial': ['ACP', 'Loading/Unloading', 'Parcel loading'],
-    'Security / RPF': ['Theft', 'Agitation', 'Line patrolling'],
-    'External / Force Majeure': ['Fog', 'Flood', 'Public agitation', 'Cattle run over'],
-    'Inter-Departmental / Control': ['Late ordering', 'Crew shortage', 'Guard shortage'],
+  final Map<Department, List<String>> _departmentReasonMap = {
+    Department.operating: ['Path unavailable', 'Crossing', 'Precedence', 'Platform unavailable'],
+    Department.mechanical: ['Brake binding', 'Pipe disconnection', 'Hot axle', 'Spring breakage'],
+    Department.electrical: ['OHE snap', 'Pantograph broken', 'Loco failure', 'No tension'],
+    Department.snt: ['Signal failure', 'Point failure', 'Track circuit failure'],
+    Department.commercial: ['ACP', 'Loading/Unloading', 'Parcel loading'],
+    Department.security: ['Theft', 'Agitation', 'Line patrolling'],
+    Department.external: ['Fog', 'Flood', 'Public agitation', 'Cattle run over'],
+    Department.interDept: ['Late ordering', 'Crew shortage', 'Guard shortage'],
   };
 
   // Reverse mapping for quick lookup: SubReason -> Department
-  final Map<String, String> _subReasonToDepartment = {};
+  final Map<String, Department> _subReasonToDepartment = {};
 
   // List for Dropdown (with headers)
   List<DropdownMenuItem<String>> _subReasonDropdownItems = [];
@@ -70,6 +70,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   // --- 5. Auto Calculated ---
   String _totalPDD = '0h 0m';
   String _crewTime = '0h 0m';
+  int _pddMinutes = 0; // Source of truth
+  int _crewTimeMinutes = 0; // Source of truth
   bool _excludeFromAvg = false;
 
   @override
@@ -94,9 +96,9 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       _subReasonDropdownItems.add(
         DropdownMenuItem<String>(
           enabled: false,
-          value: 'HEADER_$dept', // Unique value to avoid dupes, but disabled so unselectable
+          value: 'HEADER_${dept.name}', 
           child: Text(
-            dept.toUpperCase(),
+            dept.label.toUpperCase(),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Colors.grey,
@@ -126,45 +128,41 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     final ready = TrainRecord.parseTime(_timeControllers['Ready']?.text);
     final actualDep = TrainRecord.parseTime(_timeControllers['Actual Departure']?.text);
     
-    int pddMinutes = 0;
+    _pddMinutes = 0;
     if (ready != null && actualDep != null) {
       var diff = actualDep.inMinutes - ready.inMinutes;
       if (diff < 0) diff += 24 * 60; // Next day assumption
-      pddMinutes = diff;
-      final h = diff ~/ 60;
-      final m = diff % 60;
-      _totalPDD = '${h}h ${m}m';
-    } else {
-      _totalPDD = '0h 0m';
+      _pddMinutes = diff;
     }
+    _totalPDD = TrainRecord.formatMinutes(_pddMinutes);
 
     // 2. Calculate Crew Time: TOC - Sign On (or Actual Dep - Sign On if TOC missing)
     final signOn = TrainRecord.parseTime(_timeControllers['Sign On']?.text);
     final toc = TrainRecord.parseTime(_timeControllers['TOC']?.text);
     
+    _crewTimeMinutes = 0;
     if (signOn != null) {
       final end = toc ?? actualDep;
       if (end != null) {
         var diff = end.inMinutes - signOn.inMinutes;
         if (diff < 0) diff += 24 * 60;
-        final h = diff ~/ 60;
-        final m = diff % 60;
-        _crewTime = '${h}h ${m}m';
+        _crewTimeMinutes = diff;
       }
     }
+    _crewTime = TrainRecord.formatMinutes(_crewTimeMinutes);
 
     // 3. Update Primary Department based on selected Sub-Reason
     if (_subReason != null) {
-      _primaryDepartment = _subReasonToDepartment[_subReason] ?? 'Auto-detected';
+      _primaryDepartment = _subReasonToDepartment[_subReason] ?? Department.unknown;
     } else {
-      _primaryDepartment = 'Auto-detected';
+      _primaryDepartment = Department.unknown;
     }
 
     // 4. Exclude Logic
     bool shouldExclude = false;
-    if (_primaryDepartment == 'External / Force Majeure') {
+    if (_primaryDepartment == Department.external) {
       shouldExclude = true;
-    } else if (pddMinutes > 120) {
+    } else if (_pddMinutes > 120) {
       shouldExclude = true;
     }
     _excludeFromAvg = shouldExclude;
@@ -210,7 +208,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       controller.text = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     }
   }
-  
+
   void _resetForm() {
     setState(() {
       _formKey.currentState?.reset();
@@ -222,7 +220,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       for (var c in _timeControllers.values) c.clear();
       _subReason = null;
       _remarksController.clear();
-      _primaryDepartment = 'Auto-detected';
+      _primaryDepartment = Department.unknown;
       _calculateLogic();
     });
   }
@@ -239,7 +237,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       id: "0",
       date: _date,
       trainNumber: _trainNumberController.text,
-      rollingStock: 'Unknown', // Removed from UI, default to Unknown
+      rollingStock: 'Unknown', 
       direction: _direction,
       trainType: _trainType,
       movementType: _movementType,
@@ -248,11 +246,13 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       readyTime: _timeControllers['Ready']?.text,
       scheduledDeparture: _timeControllers['Scheduled Departure']?.text,
       actualDeparture: _timeControllers['Actual Departure']?.text,
-      primaryDepartment: _primaryDepartment != 'Auto-detected' ? _primaryDepartment : null,
-      subReason: _subReason,
+      primaryDepartment: _primaryDepartment, // Enum
+      subReason: _subReason ?? 'Unknown', // Safe fallback if somehow null
       crewTime: _crewTime,
       isExcluded: _excludeFromAvg,
       pdd: _totalPDD,
+      pddMinutes: _pddMinutes, // Source of truth
+      crewTimeMinutes: _crewTimeMinutes, // Source of truth
       remarks: _remarksController.text,
       status: 'Completed',
     );
@@ -267,6 +267,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       }
     } catch (e) {
       if (mounted) {
+// ... error handling
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving record: $e')),
         );
@@ -446,7 +448,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  _primaryDepartment,
+                  _primaryDepartment == Department.unknown ? 'Auto-detected' : _primaryDepartment.label,
                   style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
                 ),
               ),

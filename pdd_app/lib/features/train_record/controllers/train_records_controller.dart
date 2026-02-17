@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/record_filter_state.dart';
 import '../models/train_record.dart';
 import '../providers/record_providers.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 
 // Notifier for the Filter State
 class TrainRecordsController extends Notifier<RecordFilterState> {
@@ -59,44 +60,25 @@ final trainRecordsFilterProvider =
 final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
   final allRecordsAsync = ref.watch(trainRecordsStreamProvider);
   final filterState = ref.watch(trainRecordsFilterProvider);
+  final period = ref.watch(analysisPeriodProvider);
 
   return allRecordsAsync.maybeWhen(
     data: (records) {
       return records.where((record) {
-        // 1. Date Filter
-        final now = DateTime.now();
-        final recordDate = record.date;
-        bool dateMatch = true;
-        
-        // Normalize dates to remove time component for comparison if needed, 
-        // but record.date is usually DateTime (start of day?) or includes time.
-        // Let's assume comparisons based on day.
-        final today = DateTime(now.year, now.month, now.day);
-        final rDate = DateTime(recordDate.year, recordDate.month, recordDate.day);
-        
-        switch (filterState.dateFilter) {
-          case DateFilterPreset.today:
-             dateMatch = rDate.isAtSameMomentAs(today);
-             break;
-          case DateFilterPreset.last7Days:
-             final sevenDaysAgo = today.subtract(const Duration(days: 7));
-             dateMatch = rDate.isAfter(sevenDaysAgo) || rDate.isAtSameMomentAs(sevenDaysAgo);
-             break;
-          case DateFilterPreset.thisMonth:
-             dateMatch = rDate.year == today.year && rDate.month == today.month;
-             break;
-          case DateFilterPreset.all:
-          default:
-             dateMatch = true;
-             break;
+        // 1. Date Filter (Synced with Dashboard)
+        // Check if record date is within the global AnalysisPeriod range
+        // Add 1 second buffer to be inclusive if times are exact boundaries, 
+        // though usually Start is 00:00:00 and End is 23:59:59.
+        final rDate = record.date;
+        if (rDate.isBefore(period.startDate) || rDate.isAfter(period.endDate)) {
+          return false;
         }
-        if (!dateMatch) return false;
 
         // 2. Department Filter (OR logic: if record has Dep A AND Dep A is selected -> keep)
         // If selection is empty, show all.
         if (filterState.selectedDepartments.isNotEmpty) {
-          if (record.primaryDepartment == null ||
-              !filterState.selectedDepartments.contains(record.primaryDepartment)) {
+          // Compare Enum Label (e.g. 'Operating (Traffic)') with Selected String
+          if (!filterState.selectedDepartments.contains(record.primaryDepartment.label)) {
             return false;
           }
         }
@@ -107,15 +89,12 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
         if (statusFilters.isNotEmpty) {
           bool keep = true;
           
-          // A. Delay Magnitude (High vs Zero) - OR logic if both present?
-          // "High Delay" (>30), "Zero Delay" (==0).
-          // If User selects "High Delay", we filter for >30.
-          // If User also selects "Zero Delay", we filter for (>30 OR ==0).
+          // A. Delay Magnitude (High vs Zero)
           final hasHighDelay = statusFilters.contains(RecordStatusFilter.highDelay);
           final hasZeroDelay = statusFilters.contains(RecordStatusFilter.zeroDelay);
           
           if (hasHighDelay || hasZeroDelay) {
-             final minutes = _parsePddMinutes(record.pdd);
+             final minutes = record.pddMinutes; // Use direct int
              bool matchesDelay = false;
              if (hasHighDelay && minutes > 30) matchesDelay = true;
              if (hasZeroDelay && minutes == 0) matchesDelay = true;
@@ -123,10 +102,7 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
              if (!matchesDelay) return false;
           }
 
-          // B. Exclusion (Excluded vs Non-Excluded) - OR logic logic if both present?
-          // If User selects "Excluded", keep excluded.
-          // If User selects "Non-Excluded", keep non-excluded.
-          // If both, keep both (effectively no filter on exclusion).
+          // B. Exclusion (Excluded vs Non-Excluded)
           final hasExcluded = statusFilters.contains(RecordStatusFilter.excluded);
           final hasNonExcluded = statusFilters.contains(RecordStatusFilter.nonExcluded);
           
@@ -135,15 +111,14 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
           } else if (hasNonExcluded && !hasExcluded) {
             if (record.isExcluded) return false;
           }
-          // If both or neither, ignore.
         }
 
         // 4. Global Search
         if (filterState.query.isNotEmpty) {
           final q = filterState.query.toLowerCase();
           final matches = record.trainNumber.toLowerCase().contains(q) ||
-              (record.subReason?.toLowerCase().contains(q) ?? false) ||
-              (record.primaryDepartment?.toLowerCase().contains(q) ?? false) ||
+              (record.subReason.toLowerCase().contains(q)) ||
+              (record.primaryDepartment.label.toLowerCase().contains(q)) || // Enum label
               (record.remarks?.toLowerCase().contains(q) ?? false) ||
               (record.movementType?.toLowerCase().contains(q) ?? false);
           if (!matches) return false;
@@ -155,25 +130,6 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
     orElse: () => [],
   );
 });
-
-// Helper to parse "2h 15m" or "0h 45m" to minutes
-int _parsePddMinutes(String pdd) {
-  try {
-    final parts = pdd.split(' ');
-    int hours = 0;
-    int minutes = 0;
-    for (var part in parts) {
-      if (part.endsWith('h')) {
-        hours = int.parse(part.replaceAll('h', ''));
-      } else if (part.endsWith('m')) {
-        minutes = int.parse(part.replaceAll('m', ''));
-      }
-    }
-    return hours * 60 + minutes;
-  } catch (e) {
-    return 0;
-  }
-}
 
 // Summary Logic
 final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
@@ -195,7 +151,7 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
   int cleanCount = 0;
 
   for (var r in records) {
-    final m = _parsePddMinutes(r.pdd);
+    final m = r.pddMinutes; // Direct int access
     totalMinutes += m;
     if (m > maxMinutes) maxMinutes = m;
     
@@ -214,6 +170,14 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
   );
 });
 
+// ... TrainRecordSummary class ...
+
+String _formatMinutes(int totalMinutes) {
+  final h = totalMinutes ~/ 60;
+  final m = totalMinutes % 60;
+  return '${h}h ${m}m';
+}
+
 class TrainRecordSummary {
   final int totalRecords;
   final String totalPdd;
@@ -228,10 +192,4 @@ class TrainRecordSummary {
     required this.cleanAveragePdd,
     required this.highestDelay,
   });
-}
-
-String _formatMinutes(int totalMinutes) {
-  final h = totalMinutes ~/ 60;
-  final m = totalMinutes % 60;
-  return '${h}h ${m}m';
 }

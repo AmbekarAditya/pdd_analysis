@@ -1,18 +1,12 @@
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:csv/csv.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
-import '../../../shared/widgets/app_drawer.dart';
-import '../models/train_record.dart';
-import '../providers/record_providers.dart';
-
 import '../../../core/app_theme.dart';
+import '../models/daily_summary.dart';
+import '../models/train_record.dart';
+import '../controllers/daily_analysis_controller.dart';
 import '../../../shared/providers/layout_providers.dart';
+import 'train_records_screen.dart'; // Reuse specific widgets if possible, or duplicate for independence
 
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});
@@ -22,65 +16,51 @@ class AnalysisScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
-  DateTime _currentDate = DateTime.now();
-  final Set<String> _expandedRows = {};
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateAppBar();
+    });
+  }
 
-  void _updateAppBar(List<TrainRecord> records) {
+  void _updateAppBar() {
     ref.read(appBarProvider.notifier).update(
       title: 'Daily PDD Analysis',
-      actions: [
-        if (records.isNotEmpty)
-          TextButton.icon(
-            onPressed: () => _exportCSV(records),
-            icon: const Icon(Icons.download, color: Colors.white),
-            label: const Text('Export CSV', style: TextStyle(color: Colors.white)),
-          ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: CircleAvatar(
-            backgroundColor: AppTheme.primaryColor,
-            child: const Text('SC', style: TextStyle(color: Colors.white)),
-          ),
-        ),
-      ],
+      actions: [], // Actions can be added here
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final recordsAsync = ref.watch(trainRecordsStreamProvider);
+    final summaryAsync = ref.watch(dailySummaryProvider);
 
-    return recordsAsync.when(
-      data: (records) {
-        final filtered = records.where((r) => 
-          r.date.year == _currentDate.year && 
-          r.date.month == _currentDate.month && 
-          r.date.day == _currentDate.day).toList();
-            
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _updateAppBar(filtered);
-        });
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildDateSelector(),
-              const SizedBox(height: 24),
-              _buildAnalysisTable(filtered),
-              const SizedBox(height: 24),
-              _buildExportButtons(filtered),
-            ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildDateSelector(),
+          const SizedBox(height: 24),
+          summaryAsync.when(
+            data: (summary) => _buildDashboard(summary),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Error: $err')),
           ),
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, stack) => Center(child: Text('Error: $err')),
+        ],
+      ),
     );
   }
 
   Widget _buildDateSelector() {
+    final selectedDate = ref.watch(selectedDateProvider);
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -88,25 +68,31 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.chevron_left),
-              onPressed: () => setState(() => _currentDate = _currentDate.subtract(const Duration(days: 1))),
+              onPressed: () {
+                ref.read(selectedDateProvider.notifier).previousDay();
+              },
             ),
             TextButton.icon(
               onPressed: () async {
-                final d = await showDatePicker(
+                 final d = await showDatePicker(
                   context: context,
-                  initialDate: _currentDate,
+                  initialDate: selectedDate,
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2030),
                 );
-                if (d != null) setState(() => _currentDate = d);
+                if (d != null) {
+                   ref.read(selectedDateProvider.notifier).setDate(d);
+                }
               },
               icon: const Icon(Icons.calendar_today, size: 18),
-              label: Text(DateFormat('MMMM d, yyyy').format(_currentDate), 
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              label: Text(DateFormat('EEEE, MMM d, yyyy').format(selectedDate), 
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right),
-              onPressed: () => setState(() => _currentDate = _currentDate.add(const Duration(days: 1))),
+              onPressed: () {
+                 ref.read(selectedDateProvider.notifier).nextDay();
+              },
             ),
           ],
         ),
@@ -114,170 +100,281 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     );
   }
 
-  Widget _buildAnalysisTable(List<TrainRecord> records) {
-    return Card(
+  Widget _buildDashboard(DailySummary summary) {
+    if (summary.totalMovements == 0) {
+      return const Center(child: Padding(
+        padding: EdgeInsets.all(40),
+        child: Text("No records found for this date.", style: TextStyle(color: Colors.grey)),
+      ));
+    }
+
+    return Column(
+      children: [
+        // 1. Snapshot Summary Cards
+        Row(
+          children: [
+            Expanded(child: _buildSummaryCard('Movements', '${summary.totalMovements}', Icons.train, Colors.blue)),
+            const SizedBox(width: 12),
+            Expanded(child: _buildSummaryCard('Total PDD', '${_formatMins(summary.totalPddMinutes)}', Icons.timer, Colors.orange)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+             Expanded(child: _buildSummaryCard('Avg PDD', '${summary.averagePddMinutes}m', Icons.analytics, Colors.purple)),
+             const SizedBox(width: 12),
+             Expanded(child: _buildSummaryCard('Clean Avg', '${summary.cleanAveragePddMinutes}m', Icons.verified, Colors.green)),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // 2 & 3. Department Contribution & Top Reasons (Side by side on large screens, stacked on small)
+        LayoutBuilder(builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+             return Row(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Expanded(child: _buildDeptContribution(summary)),
+                 const SizedBox(width: 24),
+                 Expanded(child: _buildTopReasons(summary)),
+               ],
+             );
+          }
+           return Column(
+             children: [
+               _buildDeptContribution(summary),
+               const SizedBox(height: 24),
+               _buildTopReasons(summary),
+             ],
+           );
+        }),
+        const SizedBox(height: 24),
+
+        // 4. Clean vs Raw Comparison Panel
+        _buildComparisonPanel(summary),
+         const SizedBox(height: 24),
+
+        // 5. Expandable Train List
+        _buildTrainList(summary),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Train PDD Data', style: TextStyle(fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 8),
+              Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w600)),
+            ],
           ),
-          if (records.isEmpty) 
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: Text('No records for this date', style: TextStyle(color: Colors.grey))),
-            )
-          else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                showCheckboxColumn: false,
-                columns: const [
-                  DataColumn(label: Text('Train No')),
-                  DataColumn(label: Text('Stock')),
-                  DataColumn(label: Text('Sign On')),
-                  DataColumn(label: Text('TOC')),
-                  DataColumn(label: Text('Ready')),
-                  DataColumn(label: Text('Dep')),
-                  DataColumn(label: Text('PDD')),
-                ],
-                rows: records.expand((train) => [
-                  DataRow(
-                    onSelectChanged: (_) {
-                      setState(() {
-                        if (_expandedRows.contains(train.id)) {
-                          _expandedRows.remove(train.id);
-                        } else {
-                          _expandedRows.add(train.id);
-                        }
-                      });
-                    },
-                    cells: [
-                      DataCell(Text(train.trainNumber)),
-                      DataCell(Text(train.rollingStock)),
-                      DataCell(Text(train.signOnTime ?? '--')),
-                      DataCell(Text(train.tocTime ?? '--')),
-                      DataCell(Text(train.readyTime ?? '--')),
-                      DataCell(Text(train.departureTime ?? '--')),
-                      DataCell(Text(train.pdd, style: const TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                  ),
-                  if (_expandedRows.contains(train.id))
-                    DataRow(
-                      cells: [
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            color: Colors.grey[50],
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Delay Breakdown:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text('Loco: ${train.locoDelay ?? '00:00'} | C&W: ${train.cwDelay ?? '00:00'} | Traffic: ${train.trafficDelay ?? '00:00'} | Other: ${train.otherDelay ?? '00:00'}'),
-                                const SizedBox(height: 8),
-                                const Text('Remarks:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                Text(train.remarks ?? 'No remarks'),
-                              ],
-                            ),
-                          ),
-                          placeholder: true,
-                        ),
-                        const DataCell(SizedBox.shrink()),
-                        const DataCell(SizedBox.shrink()),
-                        const DataCell(SizedBox.shrink()),
-                        const DataCell(SizedBox.shrink()),
-                        const DataCell(SizedBox.shrink()),
-                        const DataCell(SizedBox.shrink()),
-                      ],
-                    ),
-                ]).toList(),
-              ),
-            ),
+          const SizedBox(height: 12),
+          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
         ],
       ),
     );
   }
 
-  Widget _buildExportButtons(List<TrainRecord> records) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+  Widget _buildDeptContribution(DailySummary summary) {
+    // Sort departments by percentage descending
+    final sortedDepts = summary.departmentContributionPercent.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Card(
+      elevation: 0,
+       shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Department Contribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            if (sortedDepts.isEmpty) const Text('No delays recorded.', style: TextStyle(color: Colors.grey)),
+            ...sortedDepts.map((e) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(e.key.label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+                        Text('${e.value.toStringAsFixed(1)}%', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: e.value / 100,
+                      backgroundColor: Colors.grey[100],
+                      color: AppTheme.primaryColor,
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopReasons(DailySummary summary) {
+    return Card(
+      elevation: 0,
+       shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Top Sub-Reasons (Freq)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+             const SizedBox(height: 20),
+             if (summary.topSubReasons.isEmpty) const Text('No reasons recorded.', style: TextStyle(color: Colors.grey)),
+             ...summary.topSubReasons.map((e) {
+               return Padding(
+                 padding: const EdgeInsets.symmetric(vertical: 8),
+                 child: Row(
+                   children: [
+                     Container(
+                       padding: const EdgeInsets.all(8),
+                       decoration: BoxDecoration(
+                         color: Colors.grey[100],
+                         borderRadius: BorderRadius.circular(8),
+                       ),
+                       child: Text('${e.value}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                     ),
+                     const SizedBox(width: 12),
+                     Expanded(child: Text(e.key, style: const TextStyle(fontSize: 13))),
+                   ],
+                 ),
+               );
+             }).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComparisonPanel(DailySummary summary) {
+    final diff = summary.averagePddMinutes - summary.cleanAveragePddMinutes;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.indigo[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.indigo[100]!),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+           _buildCompItem('Excluded Trains', '${summary.excludedCount}', Colors.indigo),
+           Container(height: 40, width: 1, color: Colors.indigo[200]),
+           _buildCompItem('Impact of Exclusions', '-${diff}m Avg', Colors.green),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildCompItem(String label, String value, Color color) {
+    return Column(
       children: [
-        OutlinedButton.icon(
-          onPressed: records.isEmpty ? null : () => _exportCSV(records),
-          icon: const Icon(Icons.description_outlined),
-          label: const Text('Export CSV'),
-        ),
-        const SizedBox(width: 12),
-        OutlinedButton.icon(
-          onPressed: null, // PDF Export placeholder
-          icon: const Icon(Icons.picture_as_pdf_outlined),
-          label: const Text('Export PDF'),
-        ),
+        Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        Text(label, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
       ],
     );
   }
 
-  Future<void> _exportCSV(List<TrainRecord> records) async {
-    final List<List<dynamic>> rows = [];
+  Widget _buildTrainList(DailySummary summary) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Detailed Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        ...summary.records.map((r) => _buildTrainRow(r)).toList(),
+      ],
+    );
+  }
 
-    // Header
-    rows.add([
-      'Date',
-      'Train No',
-      'Rolling Stock',
-      'Sign On',
-      'TOC',
-      'Ready',
-      'Departure',
-      'PDD',
-      'Loco Delay',
-      'C&W Delay',
-      'Traffic Delay',
-      'Other Delay',
-      'Remarks'
-    ]);
+  Widget _buildTrainRow(TrainRecord record) {
+     return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      elevation: 0,
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Row(
+          children: [
+             Text(record.trainNumber, style: const TextStyle(fontWeight: FontWeight.bold)),
+             const SizedBox(width: 8),
+             if (record.isExcluded) 
+               Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                 decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
+                 child: const Text('EXC', style: TextStyle(fontSize: 10)),
+               ),
+          ],
+        ),
+        subtitle: Text('${record.primaryDepartment.label} • ${record.subReason}', 
+          style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        trailing: Text(record.pddFormatted, 
+          style: TextStyle(fontWeight: FontWeight.bold, color: record.pddColor)),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDetailRow('Timings', 'Ready: ${record.readyTime ?? "-"}  |  Dep: ${record.actualDeparture ?? "-"}'),
+                _buildDetailRow('Delays', 'Crew: ${record.crewTime ?? "-"}'),
+                if (record.remarks != null && record.remarks!.isNotEmpty)
+                   _buildDetailRow('Remarks', record.remarks!),
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
+  }
 
-    // Data
-    for (var r in records) {
-      rows.add([
-        DateFormat('yyyy-MM-dd').format(r.date),
-        r.trainNumber,
-        r.rollingStock,
-        r.signOnTime ?? '',
-        r.tocTime ?? '',
-        r.readyTime ?? '',
-        r.departureTime ?? '',
-        r.pdd,
-        r.locoDelay ?? '',
-        r.cwDelay ?? '',
-        r.trafficDelay ?? '',
-        r.otherDelay ?? '',
-        r.remarks ?? ''
-      ]);
-    }
-
-    String csvData = const ListToCsvConverter().convert(rows);
-    final dateStr = DateFormat('yyyy-MM-dd').format(_currentDate);
-    final fileName = 'pdd_report_$dateStr.csv';
-
-    if (kIsWeb) {
-      // For web, use Share.shareXFiles with a data URI or just Share.share
-      // but share_plus on web works best with Share.shareXFiles for files
-      final bytes = Uint8List.fromList(csvData.codeUnits);
-      await Share.shareXFiles(
-        [XFile.fromData(bytes, name: fileName, mimeType: 'text/csv')],
-      );
-    } else {
-      final directory = await getTemporaryDirectory();
-      final path = '${directory.path}/$fileName';
-      final file = File(path);
-      await file.writeAsString(csvData);
-
-      await Share.shareXFiles(
-        [XFile(path)],
-        subject: 'PDD Report - $dateStr',
-      );
-    }
+  String _formatMins(int mins) {
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    return '${h}h ${m}m';
   }
 }

@@ -46,20 +46,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
     super.dispose();
   }
   
-  Color _getPddColor(String pdd) {
-    int minutes = 0;
-    try {
-      final parts = pdd.split(' ');
-      for (var part in parts) {
-        if (part.endsWith('m')) minutes += int.parse(part.replaceAll('m', ''));
-        if (part.endsWith('h')) minutes += int.parse(part.replaceAll('h', '')) * 60;
-      }
-    } catch (e) { return Colors.grey; }
-
-    if (minutes == 0) return Colors.green;
-    if (minutes <= 30) return Colors.orange;
-    return Colors.red;
-  }
+  // _getPddColor removed - moved to TrainRecord model.
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +228,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   }
 
   Widget _buildExpandableRecordCard(TrainRecord record) {
-    final pddColor = _getPddColor(record.pdd);
+    final pddColor = record.pddColor;
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -276,7 +263,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Expanded(child: Text(record.subReason ?? 'No Reason', 
+                  Expanded(child: Text(record.subReason, 
                     style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13), overflow: TextOverflow.ellipsis)),
                 ],
               )
@@ -286,7 +273,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(record.pdd, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pddColor)),
+              Text(record.pddFormatted, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pddColor)),
               const Text('PDD', style: TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
@@ -306,7 +293,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
                   const Divider(),
                   const SizedBox(height: 8),
                    _buildInlineDetailRow('Attribution', 
-                    '${record.primaryDepartment}\nReason: ${record.subReason}'),
+                    '${record.primaryDepartment.label}\nReason: ${record.subReason}'),
                   const SizedBox(height: 8),
                   if (record.remarks != null && record.remarks!.isNotEmpty)
                      _buildInlineDetailRow('Remarks', record.remarks!),
@@ -320,7 +307,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Crew Time: ${record.crewTime ?? "-"}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Total PDD: ${record.pdd}', style: TextStyle(fontWeight: FontWeight.bold, color: pddColor)),
+                          Text('Total PDD: ${record.pddFormatted}', style: TextStyle(fontWeight: FontWeight.bold, color: pddColor)),
                         ],
                       ),
                       Row(

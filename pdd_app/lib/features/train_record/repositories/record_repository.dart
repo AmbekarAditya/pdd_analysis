@@ -67,6 +67,18 @@ class RecordRepositoryImpl implements RecordRepository {
       remarks: row.remarks,
       status: row.status,
       pdd: row.pdd,
+      // New mappings
+      direction: row.direction,
+      trainType: row.trainType,
+      movementType: row.movementType,
+      scheduledDeparture: row.scheduledDeparture,
+      actualDeparture: row.actualDeparture,
+      primaryDepartment: Department.fromString(row.primaryDepartment),
+      subReason: row.subReason ?? 'Unknown',
+      crewTime: row.crewTime,
+      isExcluded: row.isExcluded,
+      pddMinutes: row.pddMinutes,
+      crewTimeMinutes: row.crewTimeMinutes,
     );
   }
 
@@ -87,6 +99,18 @@ class RecordRepositoryImpl implements RecordRepository {
       remarks: Value(record.remarks),
       status: Value(record.status),
       pdd: Value(record.pdd),
+      // New mappings
+      direction: Value(record.direction),
+      trainType: Value(record.trainType),
+      movementType: Value(record.movementType),
+      scheduledDeparture: Value(record.scheduledDeparture),
+      actualDeparture: Value(record.actualDeparture),
+      primaryDepartment: Value(record.primaryDepartment.name),
+      subReason: Value(record.subReason),
+      crewTime: Value(record.crewTime),
+      isExcluded: Value(record.isExcluded),
+      pddMinutes: Value(record.pddMinutes),
+      crewTimeMinutes: Value(record.crewTimeMinutes),
     );
   }
 }
