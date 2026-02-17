@@ -22,7 +22,17 @@ TrainRecord _$TrainRecordFromJson(Map<String, dynamic> json) => TrainRecord(
       actualTimeTaken: json['actualTimeTaken'] as String?,
       remarks: json['remarks'] as String?,
       status: json['status'] as String? ?? 'In Progress',
+      status: json['status'] as String? ?? 'In Progress',
       pdd: json['pdd'] as String? ?? '0:00',
+      direction: json['direction'] as String?,
+      trainType: json['trainType'] as String?,
+      movementType: json['movementType'] as String?,
+      scheduledDeparture: json['scheduledDeparture'] as String?,
+      actualDeparture: json['actualDeparture'] as String?,
+      primaryDepartment: json['primaryDepartment'] as String?,
+      subReason: json['subReason'] as String?,
+      crewTime: json['crewTime'] as String?,
+      isExcluded: json['isExcluded'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$TrainRecordToJson(TrainRecord instance) =>
@@ -43,4 +53,13 @@ Map<String, dynamic> _$TrainRecordToJson(TrainRecord instance) =>
       'remarks': instance.remarks,
       'status': instance.status,
       'pdd': instance.pdd,
+      'direction': instance.direction,
+      'trainType': instance.trainType,
+      'movementType': instance.movementType,
+      'scheduledDeparture': instance.scheduledDeparture,
+      'actualDeparture': instance.actualDeparture,
+      'primaryDepartment': instance.primaryDepartment,
+      'subReason': instance.subReason,
+      'crewTime': instance.crewTime,
+      'isExcluded': instance.isExcluded,
     };

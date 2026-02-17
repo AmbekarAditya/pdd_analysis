@@ -109,6 +109,64 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('0:00'));
+  static const VerificationMeta _directionMeta =
+      const VerificationMeta('direction');
+  @override
+  late final GeneratedColumn<String> direction = GeneratedColumn<String>(
+      'direction', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _trainTypeMeta =
+      const VerificationMeta('trainType');
+  @override
+  late final GeneratedColumn<String> trainType = GeneratedColumn<String>(
+      'train_type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _movementTypeMeta =
+      const VerificationMeta('movementType');
+  @override
+  late final GeneratedColumn<String> movementType = GeneratedColumn<String>(
+      'movement_type', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _scheduledDepartureMeta =
+      const VerificationMeta('scheduledDeparture');
+  @override
+  late final GeneratedColumn<String> scheduledDeparture =
+      GeneratedColumn<String>('scheduled_departure', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _actualDepartureMeta =
+      const VerificationMeta('actualDeparture');
+  @override
+  late final GeneratedColumn<String> actualDeparture = GeneratedColumn<String>(
+      'actual_departure', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _primaryDepartmentMeta =
+      const VerificationMeta('primaryDepartment');
+  @override
+  late final GeneratedColumn<String> primaryDepartment =
+      GeneratedColumn<String>('primary_department', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _subReasonMeta =
+      const VerificationMeta('subReason');
+  @override
+  late final GeneratedColumn<String> subReason = GeneratedColumn<String>(
+      'sub_reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _crewTimeMeta =
+      const VerificationMeta('crewTime');
+  @override
+  late final GeneratedColumn<String> crewTime = GeneratedColumn<String>(
+      'crew_time', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _isExcludedMeta =
+      const VerificationMeta('isExcluded');
+  @override
+  late final GeneratedColumn<bool> isExcluded = GeneratedColumn<bool>(
+      'is_excluded', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_excluded" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -126,7 +184,16 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
         actualTimeTaken,
         remarks,
         status,
-        pdd
+        pdd,
+        direction,
+        trainType,
+        movementType,
+        scheduledDeparture,
+        actualDeparture,
+        primaryDepartment,
+        subReason,
+        crewTime,
+        isExcluded
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -221,6 +288,52 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
       context.handle(
           _pddMeta, pdd.isAcceptableOrUnknown(data['pdd']!, _pddMeta));
     }
+    if (data.containsKey('direction')) {
+      context.handle(_directionMeta,
+          direction.isAcceptableOrUnknown(data['direction']!, _directionMeta));
+    }
+    if (data.containsKey('train_type')) {
+      context.handle(_trainTypeMeta,
+          trainType.isAcceptableOrUnknown(data['train_type']!, _trainTypeMeta));
+    }
+    if (data.containsKey('movement_type')) {
+      context.handle(
+          _movementTypeMeta,
+          movementType.isAcceptableOrUnknown(
+              data['movement_type']!, _movementTypeMeta));
+    }
+    if (data.containsKey('scheduled_departure')) {
+      context.handle(
+          _scheduledDepartureMeta,
+          scheduledDeparture.isAcceptableOrUnknown(
+              data['scheduled_departure']!, _scheduledDepartureMeta));
+    }
+    if (data.containsKey('actual_departure')) {
+      context.handle(
+          _actualDepartureMeta,
+          actualDeparture.isAcceptableOrUnknown(
+              data['actual_departure']!, _actualDepartureMeta));
+    }
+    if (data.containsKey('primary_department')) {
+      context.handle(
+          _primaryDepartmentMeta,
+          primaryDepartment.isAcceptableOrUnknown(
+              data['primary_department']!, _primaryDepartmentMeta));
+    }
+    if (data.containsKey('sub_reason')) {
+      context.handle(_subReasonMeta,
+          subReason.isAcceptableOrUnknown(data['sub_reason']!, _subReasonMeta));
+    }
+    if (data.containsKey('crew_time')) {
+      context.handle(_crewTimeMeta,
+          crewTime.isAcceptableOrUnknown(data['crew_time']!, _crewTimeMeta));
+    }
+    if (data.containsKey('is_excluded')) {
+      context.handle(
+          _isExcludedMeta,
+          isExcluded.isAcceptableOrUnknown(
+              data['is_excluded']!, _isExcludedMeta));
+    }
     return context;
   }
 
@@ -262,6 +375,24 @@ class $TrainRecordEntriesTable extends TrainRecordEntries
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       pdd: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}pdd'])!,
+      direction: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}direction']),
+      trainType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}train_type']),
+      movementType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}movement_type']),
+      scheduledDeparture: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}scheduled_departure']),
+      actualDeparture: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}actual_departure']),
+      primaryDepartment: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}primary_department']),
+      subReason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sub_reason']),
+      crewTime: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}crew_time']),
+      isExcluded: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_excluded'])!,
     );
   }
 
@@ -289,6 +420,15 @@ class TrainRecordEntry extends DataClass
   final String? remarks;
   final String status;
   final String pdd;
+  final String? direction;
+  final String? trainType;
+  final String? movementType;
+  final String? scheduledDeparture;
+  final String? actualDeparture;
+  final String? primaryDepartment;
+  final String? subReason;
+  final String? crewTime;
+  final bool isExcluded;
   const TrainRecordEntry(
       {required this.id,
       required this.date,
@@ -305,7 +445,16 @@ class TrainRecordEntry extends DataClass
       this.actualTimeTaken,
       this.remarks,
       required this.status,
-      required this.pdd});
+      required this.pdd,
+      this.direction,
+      this.trainType,
+      this.movementType,
+      this.scheduledDeparture,
+      this.actualDeparture,
+      this.primaryDepartment,
+      this.subReason,
+      this.crewTime,
+      required this.isExcluded});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -345,6 +494,31 @@ class TrainRecordEntry extends DataClass
     }
     map['status'] = Variable<String>(status);
     map['pdd'] = Variable<String>(pdd);
+    if (!nullToAbsent || direction != null) {
+      map['direction'] = Variable<String>(direction);
+    }
+    if (!nullToAbsent || trainType != null) {
+      map['train_type'] = Variable<String>(trainType);
+    }
+    if (!nullToAbsent || movementType != null) {
+      map['movement_type'] = Variable<String>(movementType);
+    }
+    if (!nullToAbsent || scheduledDeparture != null) {
+      map['scheduled_departure'] = Variable<String>(scheduledDeparture);
+    }
+    if (!nullToAbsent || actualDeparture != null) {
+      map['actual_departure'] = Variable<String>(actualDeparture);
+    }
+    if (!nullToAbsent || primaryDepartment != null) {
+      map['primary_department'] = Variable<String>(primaryDepartment);
+    }
+    if (!nullToAbsent || subReason != null) {
+      map['sub_reason'] = Variable<String>(subReason);
+    }
+    if (!nullToAbsent || crewTime != null) {
+      map['crew_time'] = Variable<String>(crewTime);
+    }
+    map['is_excluded'] = Variable<bool>(isExcluded);
     return map;
   }
 
@@ -386,6 +560,31 @@ class TrainRecordEntry extends DataClass
           : Value(remarks),
       status: Value(status),
       pdd: Value(pdd),
+      direction: direction == null && nullToAbsent
+          ? const Value.absent()
+          : Value(direction),
+      trainType: trainType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(trainType),
+      movementType: movementType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(movementType),
+      scheduledDeparture: scheduledDeparture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(scheduledDeparture),
+      actualDeparture: actualDeparture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actualDeparture),
+      primaryDepartment: primaryDepartment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(primaryDepartment),
+      subReason: subReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(subReason),
+      crewTime: crewTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(crewTime),
+      isExcluded: Value(isExcluded),
     );
   }
 
@@ -409,6 +608,17 @@ class TrainRecordEntry extends DataClass
       remarks: serializer.fromJson<String?>(json['remarks']),
       status: serializer.fromJson<String>(json['status']),
       pdd: serializer.fromJson<String>(json['pdd']),
+      direction: serializer.fromJson<String?>(json['direction']),
+      trainType: serializer.fromJson<String?>(json['trainType']),
+      movementType: serializer.fromJson<String?>(json['movementType']),
+      scheduledDeparture:
+          serializer.fromJson<String?>(json['scheduledDeparture']),
+      actualDeparture: serializer.fromJson<String?>(json['actualDeparture']),
+      primaryDepartment:
+          serializer.fromJson<String?>(json['primaryDepartment']),
+      subReason: serializer.fromJson<String?>(json['subReason']),
+      crewTime: serializer.fromJson<String?>(json['crewTime']),
+      isExcluded: serializer.fromJson<bool>(json['isExcluded']),
     );
   }
   @override
@@ -431,6 +641,15 @@ class TrainRecordEntry extends DataClass
       'remarks': serializer.toJson<String?>(remarks),
       'status': serializer.toJson<String>(status),
       'pdd': serializer.toJson<String>(pdd),
+      'direction': serializer.toJson<String?>(direction),
+      'trainType': serializer.toJson<String?>(trainType),
+      'movementType': serializer.toJson<String?>(movementType),
+      'scheduledDeparture': serializer.toJson<String?>(scheduledDeparture),
+      'actualDeparture': serializer.toJson<String?>(actualDeparture),
+      'primaryDepartment': serializer.toJson<String?>(primaryDepartment),
+      'subReason': serializer.toJson<String?>(subReason),
+      'crewTime': serializer.toJson<String?>(crewTime),
+      'isExcluded': serializer.toJson<bool>(isExcluded),
     };
   }
 
@@ -450,7 +669,16 @@ class TrainRecordEntry extends DataClass
           Value<String?> actualTimeTaken = const Value.absent(),
           Value<String?> remarks = const Value.absent(),
           String? status,
-          String? pdd}) =>
+          String? pdd,
+          Value<String?> direction = const Value.absent(),
+          Value<String?> trainType = const Value.absent(),
+          Value<String?> movementType = const Value.absent(),
+          Value<String?> scheduledDeparture = const Value.absent(),
+          Value<String?> actualDeparture = const Value.absent(),
+          Value<String?> primaryDepartment = const Value.absent(),
+          Value<String?> subReason = const Value.absent(),
+          Value<String?> crewTime = const Value.absent(),
+          bool? isExcluded}) =>
       TrainRecordEntry(
         id: id ?? this.id,
         date: date ?? this.date,
@@ -472,6 +700,22 @@ class TrainRecordEntry extends DataClass
         remarks: remarks.present ? remarks.value : this.remarks,
         status: status ?? this.status,
         pdd: pdd ?? this.pdd,
+        direction: direction.present ? direction.value : this.direction,
+        trainType: trainType.present ? trainType.value : this.trainType,
+        movementType:
+            movementType.present ? movementType.value : this.movementType,
+        scheduledDeparture: scheduledDeparture.present
+            ? scheduledDeparture.value
+            : this.scheduledDeparture,
+        actualDeparture: actualDeparture.present
+            ? actualDeparture.value
+            : this.actualDeparture,
+        primaryDepartment: primaryDepartment.present
+            ? primaryDepartment.value
+            : this.primaryDepartment,
+        subReason: subReason.present ? subReason.value : this.subReason,
+        crewTime: crewTime.present ? crewTime.value : this.crewTime,
+        isExcluded: isExcluded ?? this.isExcluded,
       );
   TrainRecordEntry copyWithCompanion(TrainRecordEntriesCompanion data) {
     return TrainRecordEntry(
@@ -502,6 +746,24 @@ class TrainRecordEntry extends DataClass
       remarks: data.remarks.present ? data.remarks.value : this.remarks,
       status: data.status.present ? data.status.value : this.status,
       pdd: data.pdd.present ? data.pdd.value : this.pdd,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      trainType: data.trainType.present ? data.trainType.value : this.trainType,
+      movementType: data.movementType.present
+          ? data.movementType.value
+          : this.movementType,
+      scheduledDeparture: data.scheduledDeparture.present
+          ? data.scheduledDeparture.value
+          : this.scheduledDeparture,
+      actualDeparture: data.actualDeparture.present
+          ? data.actualDeparture.value
+          : this.actualDeparture,
+      primaryDepartment: data.primaryDepartment.present
+          ? data.primaryDepartment.value
+          : this.primaryDepartment,
+      subReason: data.subReason.present ? data.subReason.value : this.subReason,
+      crewTime: data.crewTime.present ? data.crewTime.value : this.crewTime,
+      isExcluded:
+          data.isExcluded.present ? data.isExcluded.value : this.isExcluded,
     );
   }
 
@@ -523,29 +785,48 @@ class TrainRecordEntry extends DataClass
           ..write('actualTimeTaken: $actualTimeTaken, ')
           ..write('remarks: $remarks, ')
           ..write('status: $status, ')
-          ..write('pdd: $pdd')
+          ..write('pdd: $pdd, ')
+          ..write('direction: $direction, ')
+          ..write('trainType: $trainType, ')
+          ..write('movementType: $movementType, ')
+          ..write('scheduledDeparture: $scheduledDeparture, ')
+          ..write('actualDeparture: $actualDeparture, ')
+          ..write('primaryDepartment: $primaryDepartment, ')
+          ..write('subReason: $subReason, ')
+          ..write('crewTime: $crewTime, ')
+          ..write('isExcluded: $isExcluded')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      date,
-      trainNumber,
-      rollingStock,
-      signOnTime,
-      tocTime,
-      readyTime,
-      departureTime,
-      locoDelay,
-      cwDelay,
-      trafficDelay,
-      otherDelay,
-      actualTimeTaken,
-      remarks,
-      status,
-      pdd);
+  int get hashCode => Object.hashAll([
+        id,
+        date,
+        trainNumber,
+        rollingStock,
+        signOnTime,
+        tocTime,
+        readyTime,
+        departureTime,
+        locoDelay,
+        cwDelay,
+        trafficDelay,
+        otherDelay,
+        actualTimeTaken,
+        remarks,
+        status,
+        pdd,
+        direction,
+        trainType,
+        movementType,
+        scheduledDeparture,
+        actualDeparture,
+        primaryDepartment,
+        subReason,
+        crewTime,
+        isExcluded
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -565,7 +846,16 @@ class TrainRecordEntry extends DataClass
           other.actualTimeTaken == this.actualTimeTaken &&
           other.remarks == this.remarks &&
           other.status == this.status &&
-          other.pdd == this.pdd);
+          other.pdd == this.pdd &&
+          other.direction == this.direction &&
+          other.trainType == this.trainType &&
+          other.movementType == this.movementType &&
+          other.scheduledDeparture == this.scheduledDeparture &&
+          other.actualDeparture == this.actualDeparture &&
+          other.primaryDepartment == this.primaryDepartment &&
+          other.subReason == this.subReason &&
+          other.crewTime == this.crewTime &&
+          other.isExcluded == this.isExcluded);
 }
 
 class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
@@ -585,6 +875,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
   final Value<String?> remarks;
   final Value<String> status;
   final Value<String> pdd;
+  final Value<String?> direction;
+  final Value<String?> trainType;
+  final Value<String?> movementType;
+  final Value<String?> scheduledDeparture;
+  final Value<String?> actualDeparture;
+  final Value<String?> primaryDepartment;
+  final Value<String?> subReason;
+  final Value<String?> crewTime;
+  final Value<bool> isExcluded;
   const TrainRecordEntriesCompanion({
     this.id = const Value.absent(),
     this.date = const Value.absent(),
@@ -602,6 +901,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     this.remarks = const Value.absent(),
     this.status = const Value.absent(),
     this.pdd = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.trainType = const Value.absent(),
+    this.movementType = const Value.absent(),
+    this.scheduledDeparture = const Value.absent(),
+    this.actualDeparture = const Value.absent(),
+    this.primaryDepartment = const Value.absent(),
+    this.subReason = const Value.absent(),
+    this.crewTime = const Value.absent(),
+    this.isExcluded = const Value.absent(),
   });
   TrainRecordEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -620,6 +928,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     this.remarks = const Value.absent(),
     this.status = const Value.absent(),
     this.pdd = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.trainType = const Value.absent(),
+    this.movementType = const Value.absent(),
+    this.scheduledDeparture = const Value.absent(),
+    this.actualDeparture = const Value.absent(),
+    this.primaryDepartment = const Value.absent(),
+    this.subReason = const Value.absent(),
+    this.crewTime = const Value.absent(),
+    this.isExcluded = const Value.absent(),
   })  : date = Value(date),
         trainNumber = Value(trainNumber),
         rollingStock = Value(rollingStock);
@@ -640,6 +957,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     Expression<String>? remarks,
     Expression<String>? status,
     Expression<String>? pdd,
+    Expression<String>? direction,
+    Expression<String>? trainType,
+    Expression<String>? movementType,
+    Expression<String>? scheduledDeparture,
+    Expression<String>? actualDeparture,
+    Expression<String>? primaryDepartment,
+    Expression<String>? subReason,
+    Expression<String>? crewTime,
+    Expression<bool>? isExcluded,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -658,6 +984,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       if (remarks != null) 'remarks': remarks,
       if (status != null) 'status': status,
       if (pdd != null) 'pdd': pdd,
+      if (direction != null) 'direction': direction,
+      if (trainType != null) 'train_type': trainType,
+      if (movementType != null) 'movement_type': movementType,
+      if (scheduledDeparture != null) 'scheduled_departure': scheduledDeparture,
+      if (actualDeparture != null) 'actual_departure': actualDeparture,
+      if (primaryDepartment != null) 'primary_department': primaryDepartment,
+      if (subReason != null) 'sub_reason': subReason,
+      if (crewTime != null) 'crew_time': crewTime,
+      if (isExcluded != null) 'is_excluded': isExcluded,
     });
   }
 
@@ -677,7 +1012,16 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       Value<String?>? actualTimeTaken,
       Value<String?>? remarks,
       Value<String>? status,
-      Value<String>? pdd}) {
+      Value<String>? pdd,
+      Value<String?>? direction,
+      Value<String?>? trainType,
+      Value<String?>? movementType,
+      Value<String?>? scheduledDeparture,
+      Value<String?>? actualDeparture,
+      Value<String?>? primaryDepartment,
+      Value<String?>? subReason,
+      Value<String?>? crewTime,
+      Value<bool>? isExcluded}) {
     return TrainRecordEntriesCompanion(
       id: id ?? this.id,
       date: date ?? this.date,
@@ -695,6 +1039,15 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
       remarks: remarks ?? this.remarks,
       status: status ?? this.status,
       pdd: pdd ?? this.pdd,
+      direction: direction ?? this.direction,
+      trainType: trainType ?? this.trainType,
+      movementType: movementType ?? this.movementType,
+      scheduledDeparture: scheduledDeparture ?? this.scheduledDeparture,
+      actualDeparture: actualDeparture ?? this.actualDeparture,
+      primaryDepartment: primaryDepartment ?? this.primaryDepartment,
+      subReason: subReason ?? this.subReason,
+      crewTime: crewTime ?? this.crewTime,
+      isExcluded: isExcluded ?? this.isExcluded,
     );
   }
 
@@ -749,6 +1102,33 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
     if (pdd.present) {
       map['pdd'] = Variable<String>(pdd.value);
     }
+    if (direction.present) {
+      map['direction'] = Variable<String>(direction.value);
+    }
+    if (trainType.present) {
+      map['train_type'] = Variable<String>(trainType.value);
+    }
+    if (movementType.present) {
+      map['movement_type'] = Variable<String>(movementType.value);
+    }
+    if (scheduledDeparture.present) {
+      map['scheduled_departure'] = Variable<String>(scheduledDeparture.value);
+    }
+    if (actualDeparture.present) {
+      map['actual_departure'] = Variable<String>(actualDeparture.value);
+    }
+    if (primaryDepartment.present) {
+      map['primary_department'] = Variable<String>(primaryDepartment.value);
+    }
+    if (subReason.present) {
+      map['sub_reason'] = Variable<String>(subReason.value);
+    }
+    if (crewTime.present) {
+      map['crew_time'] = Variable<String>(crewTime.value);
+    }
+    if (isExcluded.present) {
+      map['is_excluded'] = Variable<bool>(isExcluded.value);
+    }
     return map;
   }
 
@@ -770,7 +1150,16 @@ class TrainRecordEntriesCompanion extends UpdateCompanion<TrainRecordEntry> {
           ..write('actualTimeTaken: $actualTimeTaken, ')
           ..write('remarks: $remarks, ')
           ..write('status: $status, ')
-          ..write('pdd: $pdd')
+          ..write('pdd: $pdd, ')
+          ..write('direction: $direction, ')
+          ..write('trainType: $trainType, ')
+          ..write('movementType: $movementType, ')
+          ..write('scheduledDeparture: $scheduledDeparture, ')
+          ..write('actualDeparture: $actualDeparture, ')
+          ..write('primaryDepartment: $primaryDepartment, ')
+          ..write('subReason: $subReason, ')
+          ..write('crewTime: $crewTime, ')
+          ..write('isExcluded: $isExcluded')
           ..write(')'))
         .toString();
   }
@@ -806,6 +1195,15 @@ typedef $$TrainRecordEntriesTableCreateCompanionBuilder
   Value<String?> remarks,
   Value<String> status,
   Value<String> pdd,
+  Value<String?> direction,
+  Value<String?> trainType,
+  Value<String?> movementType,
+  Value<String?> scheduledDeparture,
+  Value<String?> actualDeparture,
+  Value<String?> primaryDepartment,
+  Value<String?> subReason,
+  Value<String?> crewTime,
+  Value<bool> isExcluded,
 });
 typedef $$TrainRecordEntriesTableUpdateCompanionBuilder
     = TrainRecordEntriesCompanion Function({
@@ -825,6 +1223,15 @@ typedef $$TrainRecordEntriesTableUpdateCompanionBuilder
   Value<String?> remarks,
   Value<String> status,
   Value<String> pdd,
+  Value<String?> direction,
+  Value<String?> trainType,
+  Value<String?> movementType,
+  Value<String?> scheduledDeparture,
+  Value<String?> actualDeparture,
+  Value<String?> primaryDepartment,
+  Value<String?> subReason,
+  Value<String?> crewTime,
+  Value<bool> isExcluded,
 });
 
 class $$TrainRecordEntriesTableFilterComposer
@@ -884,6 +1291,36 @@ class $$TrainRecordEntriesTableFilterComposer
 
   ColumnFilters<String> get pdd => $composableBuilder(
       column: $table.pdd, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get direction => $composableBuilder(
+      column: $table.direction, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get trainType => $composableBuilder(
+      column: $table.trainType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get movementType => $composableBuilder(
+      column: $table.movementType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get scheduledDeparture => $composableBuilder(
+      column: $table.scheduledDeparture,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actualDeparture => $composableBuilder(
+      column: $table.actualDeparture,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get primaryDepartment => $composableBuilder(
+      column: $table.primaryDepartment,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subReason => $composableBuilder(
+      column: $table.subReason, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get crewTime => $composableBuilder(
+      column: $table.crewTime, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isExcluded => $composableBuilder(
+      column: $table.isExcluded, builder: (column) => ColumnFilters(column));
 }
 
 class $$TrainRecordEntriesTableOrderingComposer
@@ -946,6 +1383,37 @@ class $$TrainRecordEntriesTableOrderingComposer
 
   ColumnOrderings<String> get pdd => $composableBuilder(
       column: $table.pdd, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+      column: $table.direction, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get trainType => $composableBuilder(
+      column: $table.trainType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get movementType => $composableBuilder(
+      column: $table.movementType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get scheduledDeparture => $composableBuilder(
+      column: $table.scheduledDeparture,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actualDeparture => $composableBuilder(
+      column: $table.actualDeparture,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get primaryDepartment => $composableBuilder(
+      column: $table.primaryDepartment,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get subReason => $composableBuilder(
+      column: $table.subReason, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get crewTime => $composableBuilder(
+      column: $table.crewTime, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isExcluded => $composableBuilder(
+      column: $table.isExcluded, builder: (column) => ColumnOrderings(column));
 }
 
 class $$TrainRecordEntriesTableAnnotationComposer
@@ -1004,6 +1472,33 @@ class $$TrainRecordEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get pdd =>
       $composableBuilder(column: $table.pdd, builder: (column) => column);
+
+  GeneratedColumn<String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<String> get trainType =>
+      $composableBuilder(column: $table.trainType, builder: (column) => column);
+
+  GeneratedColumn<String> get movementType => $composableBuilder(
+      column: $table.movementType, builder: (column) => column);
+
+  GeneratedColumn<String> get scheduledDeparture => $composableBuilder(
+      column: $table.scheduledDeparture, builder: (column) => column);
+
+  GeneratedColumn<String> get actualDeparture => $composableBuilder(
+      column: $table.actualDeparture, builder: (column) => column);
+
+  GeneratedColumn<String> get primaryDepartment => $composableBuilder(
+      column: $table.primaryDepartment, builder: (column) => column);
+
+  GeneratedColumn<String> get subReason =>
+      $composableBuilder(column: $table.subReason, builder: (column) => column);
+
+  GeneratedColumn<String> get crewTime =>
+      $composableBuilder(column: $table.crewTime, builder: (column) => column);
+
+  GeneratedColumn<bool> get isExcluded => $composableBuilder(
+      column: $table.isExcluded, builder: (column) => column);
 }
 
 class $$TrainRecordEntriesTableTableManager extends RootTableManager<
@@ -1050,6 +1545,15 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             Value<String?> remarks = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<String> pdd = const Value.absent(),
+            Value<String?> direction = const Value.absent(),
+            Value<String?> trainType = const Value.absent(),
+            Value<String?> movementType = const Value.absent(),
+            Value<String?> scheduledDeparture = const Value.absent(),
+            Value<String?> actualDeparture = const Value.absent(),
+            Value<String?> primaryDepartment = const Value.absent(),
+            Value<String?> subReason = const Value.absent(),
+            Value<String?> crewTime = const Value.absent(),
+            Value<bool> isExcluded = const Value.absent(),
           }) =>
               TrainRecordEntriesCompanion(
             id: id,
@@ -1068,6 +1572,15 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             remarks: remarks,
             status: status,
             pdd: pdd,
+            direction: direction,
+            trainType: trainType,
+            movementType: movementType,
+            scheduledDeparture: scheduledDeparture,
+            actualDeparture: actualDeparture,
+            primaryDepartment: primaryDepartment,
+            subReason: subReason,
+            crewTime: crewTime,
+            isExcluded: isExcluded,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -1086,6 +1599,15 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             Value<String?> remarks = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<String> pdd = const Value.absent(),
+            Value<String?> direction = const Value.absent(),
+            Value<String?> trainType = const Value.absent(),
+            Value<String?> movementType = const Value.absent(),
+            Value<String?> scheduledDeparture = const Value.absent(),
+            Value<String?> actualDeparture = const Value.absent(),
+            Value<String?> primaryDepartment = const Value.absent(),
+            Value<String?> subReason = const Value.absent(),
+            Value<String?> crewTime = const Value.absent(),
+            Value<bool> isExcluded = const Value.absent(),
           }) =>
               TrainRecordEntriesCompanion.insert(
             id: id,
@@ -1104,6 +1626,15 @@ class $$TrainRecordEntriesTableTableManager extends RootTableManager<
             remarks: remarks,
             status: status,
             pdd: pdd,
+            direction: direction,
+            trainType: trainType,
+            movementType: movementType,
+            scheduledDeparture: scheduledDeparture,
+            actualDeparture: actualDeparture,
+            primaryDepartment: primaryDepartment,
+            subReason: subReason,
+            crewTime: crewTime,
+            isExcluded: isExcluded,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

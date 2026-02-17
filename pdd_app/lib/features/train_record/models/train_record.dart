@@ -25,7 +25,19 @@ class TrainRecord {
   final String? remarks;
   
   final String status; // Completed, Delayed, In Progress
+  final String status; // Completed, Delayed, In Progress
   final String pdd; // Formatted PDD string
+  
+  // New fields
+  final String? direction;
+  final String? trainType;
+  final String? movementType;
+  final String? scheduledDeparture;
+  final String? actualDeparture;
+  final String? primaryDepartment;
+  final String? subReason;
+  final String? crewTime;
+  final bool isExcluded;
 
   TrainRecord({
     required this.id,
@@ -43,7 +55,17 @@ class TrainRecord {
     this.actualTimeTaken,
     this.remarks,
     this.status = 'In Progress',
+    this.status = 'In Progress',
     this.pdd = '0:00',
+    this.direction,
+    this.trainType,
+    this.movementType,
+    this.scheduledDeparture,
+    this.actualDeparture,
+    this.primaryDepartment,
+    this.subReason,
+    this.crewTime,
+    this.isExcluded = false,
   });
 
   // Utility to parse HH:mm to Duration
