@@ -25,7 +25,6 @@ class TrainRecord {
   final String? remarks;
   
   final String status; // Completed, Delayed, In Progress
-  final String status; // Completed, Delayed, In Progress
   final String pdd; // Formatted PDD string
   
   // New fields
@@ -54,7 +53,6 @@ class TrainRecord {
     this.otherDelay,
     this.actualTimeTaken,
     this.remarks,
-    this.status = 'In Progress',
     this.status = 'In Progress',
     this.pdd = '0:00',
     this.direction,

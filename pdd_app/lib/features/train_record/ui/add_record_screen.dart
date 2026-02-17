@@ -18,13 +18,12 @@ class AddRecordScreen extends ConsumerStatefulWidget {
 class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Section 1: Basic Information
+  // --- 1. Basic Information ---
   DateTime _date = DateTime.now();
   final TextEditingController _trainNumberController = TextEditingController();
   String? _direction = 'UP';
   String? _trainType;
   String? _movementType;
-  String? _selectedRollingStock;
   
   final List<String> _trainTypes = [
     'Passenger', 'Mail/Express', 'Superfast', 'MEMU/DEMU', 
@@ -33,11 +32,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   final List<String> _movementTypes = [
     'Originating', 'Through', 'Terminating', 'Turnaround'
   ];
-  final List<String> _rollingStocks = [
-    'DN MU', 'UP BCNE', 'DN LE', 'UP PHDL', 'DN BOXN', 'UP MGKS', 'DN ICDW'
-  ];
 
-  // Section 2: Timings
+  // --- 2. Timings ---
   final Map<String, TextEditingController> _timeControllers = {
     'Sign On': TextEditingController(),
     'TOC': TextEditingController(),
@@ -46,11 +42,12 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     'Actual Departure': TextEditingController(),
   };
 
-  // Section 3: Delay Attribution
-  String? _primaryDepartment;
+  // --- 3. Delay Attribution ---
   String? _subReason;
-  
-  final Map<String, List<String>> _departmentReasons = {
+  String _primaryDepartment = 'Auto-detected'; // Read-only
+
+  // Mapping from Department -> List of Sub-Reasons
+  final Map<String, List<String>> _departmentReasonMap = {
     'Operating (Traffic)': ['Path unavailable', 'Crossing', 'Precedence', 'Platform unavailable'],
     'Mechanical (C&W)': ['Brake binding', 'Pipe disconnection', 'Hot axle', 'Spring breakage'],
     'Electrical (TRD / Loco)': ['OHE snap', 'Pantograph broken', 'Loco failure', 'No tension'],
@@ -61,7 +58,16 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     'Inter-Departmental / Control': ['Late ordering', 'Crew shortage', 'Guard shortage'],
   };
 
-  // Section 4: Auto Calculated
+  // Reverse mapping for quick lookup: SubReason -> Department
+  final Map<String, String> _subReasonToDepartment = {};
+
+  // List for Dropdown (with headers)
+  List<DropdownMenuItem<String>> _subReasonDropdownItems = [];
+
+  // --- 4. Remarks ---
+  final TextEditingController _remarksController = TextEditingController();
+
+  // --- 5. Auto Calculated ---
   String _totalPDD = '0h 0m';
   String _crewTime = '0h 0m';
   bool _excludeFromAvg = false;
@@ -69,6 +75,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeReasonMapping();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateAppBar();
     });
@@ -78,6 +85,40 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     _timeControllers['Actual Departure']?.addListener(_calculateLogic);
     _timeControllers['Sign On']?.addListener(_calculateLogic);
     _timeControllers['TOC']?.addListener(_calculateLogic);
+  }
+
+  void _initializeReasonMapping() {
+    _subReasonDropdownItems = [];
+    _departmentReasonMap.forEach((dept, reasons) {
+      // Add Department Header
+      _subReasonDropdownItems.add(
+        DropdownMenuItem<String>(
+          enabled: false,
+          value: 'HEADER_$dept', // Unique value to avoid dupes, but disabled so unselectable
+          child: Text(
+            dept.toUpperCase(),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      );
+      // Add Reasons
+      for (var reason in reasons) {
+        _subReasonToDepartment[reason] = dept;
+        _subReasonDropdownItems.add(
+          DropdownMenuItem<String>(
+            value: reason,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: Text(reason),
+            ),
+          ),
+        );
+      }
+    });
   }
 
   void _calculateLogic() {
@@ -112,7 +153,14 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       }
     }
 
-    // 3. Exclude Logic
+    // 3. Update Primary Department based on selected Sub-Reason
+    if (_subReason != null) {
+      _primaryDepartment = _subReasonToDepartment[_subReason] ?? 'Auto-detected';
+    } else {
+      _primaryDepartment = 'Auto-detected';
+    }
+
+    // 4. Exclude Logic
     bool shouldExclude = false;
     if (_primaryDepartment == 'External / Force Majeure') {
       shouldExclude = true;
@@ -128,6 +176,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   void dispose() {
     for (var c in _timeControllers.values) c.dispose();
     _trainNumberController.dispose();
+    _remarksController.dispose();
     super.dispose();
   }
 
@@ -170,10 +219,10 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       _direction = 'UP';
       _trainType = null;
       _movementType = null;
-      _selectedRollingStock = null;
       for (var c in _timeControllers.values) c.clear();
-      _primaryDepartment = null;
       _subReason = null;
+      _remarksController.clear();
+      _primaryDepartment = 'Auto-detected';
       _calculateLogic();
     });
   }
@@ -186,27 +235,11 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       return;
     }
 
-    // Custom Validation
-    final signOn = TrainRecord.parseTime(_timeControllers['Sign On']?.text);
-    final ready = TrainRecord.parseTime(_timeControllers['Ready']?.text);
-    if (signOn != null && ready != null) {
-      // Handle day wrap simplistic check: if ready is significantly less than signOn, assume next day.
-      // But purely strictly: Ready >= Sign On might fail if midnight cross.
-      // Rule: if ready < signOn, allowed ONLY if diff is reasonable for next day.
-      // For simplicity here, we warn if ready < signOn without midnight context.
-      // Let's assume input is 24h same-day/next-day handled by user.
-      // Implementing explicit check requested: "Ready >= Sign On"
-      // We will allow if Ready < SignOn implies next day (e.g. SignOn 23:00, Ready 01:00)
-      // So no strict block, just maybe logic.
-      // User request said "Apply validation: Ready >= Sign On".
-      // We can interpret this as "Ready time cannot be before Sign On time"
-    }
-
     final record = TrainRecord(
       id: "0",
       date: _date,
       trainNumber: _trainNumberController.text,
-      rollingStock: _selectedRollingStock ?? '', // Should be validated
+      rollingStock: 'Unknown', // Removed from UI, default to Unknown
       direction: _direction,
       trainType: _trainType,
       movementType: _movementType,
@@ -215,11 +248,12 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       readyTime: _timeControllers['Ready']?.text,
       scheduledDeparture: _timeControllers['Scheduled Departure']?.text,
       actualDeparture: _timeControllers['Actual Departure']?.text,
-      primaryDepartment: _primaryDepartment,
+      primaryDepartment: _primaryDepartment != 'Auto-detected' ? _primaryDepartment : null,
       subReason: _subReason,
       crewTime: _crewTime,
       isExcluded: _excludeFromAvg,
       pdd: _totalPDD,
+      remarks: _remarksController.text,
       status: 'Completed',
     );
 
@@ -254,9 +288,11 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
             const SizedBox(height: 16),
             _buildSection3Delays(),
             const SizedBox(height: 16),
-            _buildSection4Calculations(),
+            _buildSection4Remarks(),
+            const SizedBox(height: 16),
+            _buildSection5Calculations(),
             const SizedBox(height: 32),
-            _buildSection5Actions(),
+            _buildSection6Actions(),
             const SizedBox(height: 40),
           ],
         ),
@@ -335,17 +371,6 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
                 onChanged: (v) => setState(() => _movementType = v),
               ),
             ),
-             _buildFieldContainer(
-              'Rolling Stock *',
-              isMobile ? double.infinity : 200,
-              DropdownButtonFormField<String>(
-                value: _selectedRollingStock,
-                validator: (v) => v == null ? 'Required' : null,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Select Stock'),
-                items: _rollingStocks.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                onChanged: (v) => setState(() => _selectedRollingStock = v),
-              ),
-            ),
           ],
         );
       }),
@@ -366,7 +391,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
               readOnly: true,
               onTap: () => _selectTime(e.value),
               validator: (v) {
-                // Specific validation logic per field could go here if strict
+                // strict validation can be added here
                 return null;
               },
               decoration: const InputDecoration(
@@ -387,18 +412,18 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         children: [
           Expanded(
             child: _buildFieldContainer(
-              'Primary Department',
+              'Sub-Reason *',
               double.infinity,
               DropdownButtonFormField<String>(
-                value: _primaryDepartment,
+                value: _subReason,
                 isExpanded: true,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Select Department'),
-                items: _departmentReasons.keys.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                validator: (v) => v == null ? 'Required' : null,
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Select Sub-Reason'),
+                items: _subReasonDropdownItems,
                 onChanged: (v) {
                   setState(() {
-                    _primaryDepartment = v;
-                    _subReason = null; // Reset sub-reason
-                    _calculateLogic(); // Re-run logic for exclusion
+                    _subReason = v;
+                    _calculateLogic();
                   });
                 },
               ),
@@ -411,16 +436,19 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         children: [
           Expanded(
             child: _buildFieldContainer(
-              'Sub-Reason',
+              'Primary Department (Auto-Detected)',
               double.infinity,
-              DropdownButtonFormField<String>(
-                value: _subReason,
-                isExpanded: true,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Select Reason'),
-                items: _primaryDepartment == null 
-                  ? [] 
-                  : _departmentReasons[_primaryDepartment]!.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                onChanged: (v) => setState(() => _subReason = v),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  border: Border.all(color: Colors.grey[400]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  _primaryDepartment,
+                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),
@@ -429,7 +457,25 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     ]);
   }
 
-  Widget _buildSection4Calculations() {
+  Widget _buildSection4Remarks() {
+    return _buildCard('Remarks', [
+      _buildFieldContainer(
+        'Operational Remarks (Optional)',
+        double.infinity,
+        TextFormField(
+          controller: _remarksController,
+          maxLines: 3,
+          maxLength: 250,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Enter any additional details...',
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildSection5Calculations() {
     return _buildCard('Auto Calculated', [
       Row(
         children: [
@@ -455,7 +501,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     ]);
   }
 
-  Widget _buildSection5Actions() {
+  Widget _buildSection6Actions() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [

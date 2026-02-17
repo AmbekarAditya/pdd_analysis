@@ -22,7 +22,6 @@ TrainRecord _$TrainRecordFromJson(Map<String, dynamic> json) => TrainRecord(
       actualTimeTaken: json['actualTimeTaken'] as String?,
       remarks: json['remarks'] as String?,
       status: json['status'] as String? ?? 'In Progress',
-      status: json['status'] as String? ?? 'In Progress',
       pdd: json['pdd'] as String? ?? '0:00',
       direction: json['direction'] as String?,
       trainType: json['trainType'] as String?,
