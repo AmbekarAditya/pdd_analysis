@@ -46,6 +46,36 @@ class PDDCalculator {
     return '$hours:${minutes.toString().padLeft(2, '0')}';
   }
 
+  /// Calculates the difference in minutes between two timestamps in HH:MM format.
+  /// Handles midnight crossing by adding 1440 minutes if the result is negative.
+  static int calculateMinutesBetweenTimes(String? laterStr, String? earlierStr) {
+    if (laterStr == null || earlierStr == null || !laterStr.contains(':') || !earlierStr.contains(':')) {
+      return 0;
+    }
+
+    final laterParts = laterStr.split(':');
+    final earlierParts = earlierStr.split(':');
+    
+    if (laterParts.length != 2 || earlierParts.length != 2) return 0;
+
+    final laterH = int.tryParse(laterParts[0]) ?? 0;
+    final laterM = int.tryParse(laterParts[1]) ?? 0;
+    final earlierH = int.tryParse(earlierParts[0]) ?? 0;
+    final earlierM = int.tryParse(earlierParts[1]) ?? 0;
+
+    final laterTotal = (laterH * 60) + laterM;
+    final earlierTotal = (earlierH * 60) + earlierM;
+
+    return calculateMinutesDifference(laterTotal, earlierTotal);
+  }
+
+  /// Calculates the difference between two minute values, handling midnight crossing.
+  static int calculateMinutesDifference(int later, int earlier) {
+    int diff = later - earlier;
+    if (diff < 0) diff += 1440;
+    return diff;
+  }
+
   /// Calculates the average [Duration] from a list of strings.
   static Duration calculateAverage(List<String> pddList) {
     if (pddList.isEmpty) return Duration.zero;

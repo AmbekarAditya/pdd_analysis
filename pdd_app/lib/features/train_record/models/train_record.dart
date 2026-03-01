@@ -138,20 +138,10 @@ class TrainRecord {
     return Colors.red;
   }
 
-  // 3. Crew Time Calculation logic 
-  static int calculateDurationMinutes(String? start, String? end) {
-    if (start == null || end == null) return 0;
-    final s = parseTime(start);
-    final e = parseTime(end);
-    if (s == null || e == null) return 0;
-    
-    var diff = e.inMinutes - s.inMinutes;
-    if (diff < 0) diff += 24 * 60;
-    return diff;
-  }
-
   // Utility (Existing)
-  static Duration? parseTime(String? timeStr) {
+  static Duration? parseTime(String? timeStr) => _parseTime(timeStr);
+  
+  static Duration? _parseTime(String? timeStr) {
     if (timeStr == null || !timeStr.contains(':')) return null;
     final parts = timeStr.split(':');
     if (parts.length != 2) return null;

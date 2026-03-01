@@ -7,6 +7,7 @@ import '../../../core/app_theme.dart';
 import '../models/train_record.dart';
 import '../providers/record_providers.dart';
 import '../../../shared/providers/layout_providers.dart';
+import '../../../core/utils/pdd_calculator.dart';
 
 class AddRecordScreen extends ConsumerStatefulWidget {
   const AddRecordScreen({super.key});
@@ -124,31 +125,16 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   }
 
   void _calculateLogic() {
-    // 1. Calculate PDD: Actual Departure - Ready
-    final ready = TrainRecord.parseTime(_timeControllers['Ready']?.text);
-    final actualDep = TrainRecord.parseTime(_timeControllers['Actual Departure']?.text);
-    
-    _pddMinutes = 0;
-    if (ready != null && actualDep != null) {
-      var diff = actualDep.inMinutes - ready.inMinutes;
-      if (diff < 0) diff += 24 * 60; // Next day assumption
-      _pddMinutes = diff;
-    }
+    final signOn = _timeControllers['Sign On']?.text;
+    final ready = _timeControllers['Ready']?.text;
+    final actualDep = _timeControllers['Actual Departure']?.text;
+
+    // 1. Calculate PDD: Actual Departure - Sign On
+    _pddMinutes = PDDCalculator.calculateMinutesBetweenTimes(actualDep, signOn);
     _totalPDD = TrainRecord.formatMinutes(_pddMinutes);
 
-    // 2. Calculate Crew Time: TOC - Sign On (or Actual Dep - Sign On if TOC missing)
-    final signOn = TrainRecord.parseTime(_timeControllers['Sign On']?.text);
-    final toc = TrainRecord.parseTime(_timeControllers['TOC']?.text);
-    
-    _crewTimeMinutes = 0;
-    if (signOn != null) {
-      final end = toc ?? actualDep;
-      if (end != null) {
-        var diff = end.inMinutes - signOn.inMinutes;
-        if (diff < 0) diff += 24 * 60;
-        _crewTimeMinutes = diff;
-      }
-    }
+    // 2. Calculate Crew Time: Ready - Sign On
+    _crewTimeMinutes = PDDCalculator.calculateMinutesBetweenTimes(ready, signOn);
     _crewTime = TrainRecord.formatMinutes(_crewTimeMinutes);
 
     // 3. Update Primary Department based on selected Sub-Reason
