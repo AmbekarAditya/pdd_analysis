@@ -31,11 +31,11 @@ class MainLayout extends ConsumerWidget {
           if (isDesktop)
             Container(
               width: 280,
-              color: AppTheme.primaryColor,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               child: const NavContent(isSidebar: true),
             ),
           if (isDesktop)
-            const VerticalDivider(width: 1, color: Colors.white24),
+            VerticalDivider(width: 1, color: Theme.of(context).colorScheme.outlineVariant),
           Expanded(child: child),
         ],
       ),

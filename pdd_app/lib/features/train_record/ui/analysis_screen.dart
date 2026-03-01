@@ -59,7 +59,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -86,7 +86,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
               },
               icon: const Icon(Icons.calendar_today, size: 18),
               label: Text(DateFormat('EEEE, MMM d, yyyy').format(selectedDate), 
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right),
@@ -102,9 +102,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
 
   Widget _buildDashboard(DailySummary summary) {
     if (summary.totalMovements == 0) {
-      return const Center(child: Padding(
-        padding: EdgeInsets.all(40),
-        child: Text("No records found for this date.", style: TextStyle(color: Colors.grey)),
+      return Center(child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: Text("No records found for this date.", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ));
     }
 
@@ -164,10 +164,11 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.shadow.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,11 +177,11 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
             children: [
               Icon(icon, size: 20, color: color),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w600)),
+              Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12, fontWeight: FontWeight.w600)),
             ],
           ),
           const SizedBox(height: 12),
-          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+          Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
         ],
       ),
     );
@@ -195,7 +196,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       elevation: 0,
        shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -204,7 +205,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
           children: [
             const Text('Department Contribution', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            if (sortedDepts.isEmpty) const Text('No delays recorded.', style: TextStyle(color: Colors.grey)),
+            if (sortedDepts.isEmpty) Text('No delays recorded.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ...sortedDepts.map((e) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
@@ -220,8 +221,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                     const SizedBox(height: 6),
                     LinearProgressIndicator(
                       value: e.value / 100,
-                      backgroundColor: Colors.grey[100],
-                      color: AppTheme.primaryColor,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: Theme.of(context).colorScheme.primary,
                       minHeight: 6,
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -240,7 +241,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       elevation: 0,
        shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -249,7 +250,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
           children: [
             const Text('Top Sub-Reasons (Freq)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
              const SizedBox(height: 20),
-             if (summary.topSubReasons.isEmpty) const Text('No reasons recorded.', style: TextStyle(color: Colors.grey)),
+             if (summary.topSubReasons.isEmpty) Text('No reasons recorded.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
              ...summary.topSubReasons.map((e) {
                return Padding(
                  padding: const EdgeInsets.symmetric(vertical: 8),
@@ -258,7 +259,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                      Container(
                        padding: const EdgeInsets.all(8),
                        decoration: BoxDecoration(
-                         color: Colors.grey[100],
+                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
                          borderRadius: BorderRadius.circular(8),
                        ),
                        child: Text('${e.value}', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -280,15 +281,15 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.indigo[50],
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo[100]!),
+        border: Border.all(color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-           _buildCompItem('Excluded Trains', '${summary.excludedCount}', Colors.indigo),
-           Container(height: 40, width: 1, color: Colors.indigo[200]),
+           _buildCompItem('Excluded Trains', '${summary.excludedCount}', Theme.of(context).colorScheme.primary),
+           Container(height: 40, width: 1, color: Theme.of(context).colorScheme.outlineVariant),
            _buildCompItem('Impact of Exclusions', '-${diff}m Avg', Colors.green),
         ],
       ),
@@ -319,7 +320,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
      return Card(
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       elevation: 0,
@@ -332,13 +333,13 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
              if (record.isExcluded) 
                Container(
                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                 decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(4)),
-                 child: const Text('EXC', style: TextStyle(fontSize: 10)),
+                 decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4)),
+                 child: Text('EXC', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
                ),
           ],
         ),
         subtitle: Text('${record.primaryDepartment.label} • ${record.subReason}', 
-          style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         trailing: Text(record.pddFormatted, 
           style: TextStyle(fontWeight: FontWeight.bold, color: record.pddColor)),
         children: [
@@ -365,7 +366,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
+          SizedBox(width: 60, child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant))),
           Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
       ),

@@ -133,9 +133,9 @@ class TrainRecord {
 
   // 2. PDD Severity Color
   Color get pddColor {
-    if (pddMinutes == 0) return Colors.green;
-    if (pddMinutes <= 30) return Colors.orange;
-    return Colors.red;
+    if (pddMinutes == 0) return const Color(0xFF4CAF50); // Material Green 500
+    if (pddMinutes <= 30) return const Color(0xFFFF9800); // Material Orange 500
+    return const Color(0xFFF44336); // Material Red 500
   }
 
   // Utility (Existing)

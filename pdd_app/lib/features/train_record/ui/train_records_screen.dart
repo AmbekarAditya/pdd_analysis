@@ -33,9 +33,9 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
       actions: [], 
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.go('/train-record/new'),
-        label: const Text('Add New', style: TextStyle(color: Colors.white)),
-        icon: const Icon(Icons.add, color: Colors.white),
-        backgroundColor: AppTheme.primaryColor,
+        label: Text('Add New', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+        icon: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -77,7 +77,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: TextField(
         controller: _searchController,
         onChanged: (val) {
@@ -88,7 +88,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
           prefixIcon: const Icon(Icons.search),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey[300]!),
+            borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
         ),
@@ -99,7 +99,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   Widget _buildChipFilterRow() {
     return Container(
       height: 60,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -142,9 +142,9 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
         onSelected: (_) {
           ref.read(trainRecordsFilterProvider.notifier).toggleDateFilter(preset);
         },
-        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primaryContainer,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.black87,
+          color: isSelected ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -162,9 +162,9 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
         onSelected: (_) {
           ref.read(trainRecordsFilterProvider.notifier).toggleStatusFilter(filter);
         },
-        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primaryContainer,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.black87,
+          color: isSelected ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -193,9 +193,9 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
            // In _buildChipFilterRow I passed the full name to _buildDeptChip
            ref.read(trainRecordsFilterProvider.notifier).toggleDepartment(dept);
         },
-        selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+        selectedColor: Theme.of(context).colorScheme.primaryContainer,
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primaryColor : Colors.black87,
+          color: isSelected ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -206,8 +206,8 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -224,8 +224,8 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
   Widget _buildSummaryItem(String label, String value, {Color? color}) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color ?? Colors.black87)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: color ?? Theme.of(context).colorScheme.onSurface)),
+        Text(label, style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -252,8 +252,8 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
               if (record.isExcluded)
                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
-                    child: const Text('EXC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4)),
+                    child: Text('EXC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                  ),
             ],
           ),
@@ -262,7 +262,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
             children: [
               const SizedBox(height: 4),
               Text('${DateFormat('MMM d').format(record.date)} • ${record.direction} • ${record.trainType}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 4),
               Row(
                 children: [
@@ -277,12 +277,12 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(record.pddFormatted, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: pddColor)),
-              const Text('PDD', style: TextStyle(fontSize: 10, color: Colors.grey)),
+              Text('PDD', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
           children: [
             Container(
-              color: Colors.grey[50], // Subtle background for expanded area
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3), // Subtle background for expanded area
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,7 +349,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+        Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 2),
         Text(value, style: const TextStyle(fontSize: 13, height: 1.4)),
       ],

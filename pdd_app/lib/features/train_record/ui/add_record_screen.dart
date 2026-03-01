@@ -101,7 +101,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
             dept.label.toUpperCase(),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
@@ -170,8 +170,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16),
           child: CircleAvatar(
-            backgroundColor: AppTheme.primaryColor,
-            child: Text('SC', style: TextStyle(color: Colors.white)),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            child: Text('SC', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
           ),
         ),
       ],
@@ -433,13 +433,13 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  border: Border.all(color: Colors.grey[400]!),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   _primaryDepartment == Department.unknown ? 'Auto-detected' : _primaryDepartment.label,
-                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -484,8 +484,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
               'Exclude from Avg', 
               _excludeFromAvg ? 'YES' : 'NO', 
               _excludeFromAvg ? Icons.block : Icons.check_circle,
-              color: _excludeFromAvg ? Colors.red[100] : Colors.green[100],
-              textColor: _excludeFromAvg ? Colors.red[800] : Colors.green[800],
+              color: _excludeFromAvg ? Theme.of(context).colorScheme.errorContainer : Theme.of(context).colorScheme.primaryContainer,
+              textColor: _excludeFromAvg ? Theme.of(context).colorScheme.onErrorContainer : Theme.of(context).colorScheme.onPrimaryContainer,
             ),
           ),
         ],
@@ -506,11 +506,11 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         ElevatedButton.icon(
           onPressed: _saveRecord,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           ),
-          icon: const Icon(Icons.save, color: Colors.white),
-          label: const Text('Save Record', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          icon: Icon(Icons.save, color: Theme.of(context).colorScheme.onPrimary),
+          label: Text('Save Record', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -525,7 +525,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
             const Divider(height: 24),
             ...children,
           ],
@@ -540,7 +540,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 6),
           child,
         ],
@@ -552,22 +552,22 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color ?? Colors.grey[100],
+        color: color ?? Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: Colors.grey[600]),
+              Icon(icon, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.w500)),
+              Text(label, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
             ],
           ),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor ?? Colors.black87)),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor ?? Theme.of(context).colorScheme.onSurface)),
         ],
       ),
     );

@@ -20,7 +20,7 @@ class NavContent extends StatelessWidget {
       children: [
         if (!isSidebar)
           DrawerHeader(
-            decoration: const BoxDecoration(color: Colors.white),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
             padding: const EdgeInsets.all(24),
             child: Center(
               child: Image.network(
@@ -90,7 +90,7 @@ class NavContent extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(color: Colors.white24),
+        Divider(color: Theme.of(context).colorScheme.outlineVariant),
         _buildNavItem(
           context,
           icon: Icons.logout,
@@ -115,13 +115,13 @@ class NavContent extends StatelessWidget {
     return ListTile(
       leading: Icon(
         isActive ? activeIcon : icon, 
-        color: isActive ? Colors.white : Colors.white70,
+        color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
         size: 24,
       ),
       title: Text(
         title,
         style: TextStyle(
-          color: isActive ? Colors.white : Colors.white70,
+          color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
           fontSize: 15,
           fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
         ),
@@ -132,8 +132,8 @@ class NavContent extends StatelessWidget {
           if (!isSidebar) Scaffold.of(context).closeDrawer();
         }
       },
-      tileColor: isActive ? Colors.white.withValues(alpha: 0.1) : null,
-      hoverColor: Colors.white.withValues(alpha: 0.05),
+      tileColor: isActive ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1) : null,
+      hoverColor: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.05),
       contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );

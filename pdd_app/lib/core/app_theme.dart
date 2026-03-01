@@ -19,6 +19,15 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
+      chipTheme: const ChipThemeData(
+        labelStyle: TextStyle(fontSize: 12),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        shape: StadiumBorder(),
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        dense: true,
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -32,6 +41,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(16),
         ),
         elevation: 2,
+        color: Colors.white,
       ),
     );
   }
@@ -47,6 +57,15 @@ class AppTheme {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+      ),
+      chipTheme: const ChipThemeData(
+        labelStyle: TextStyle(fontSize: 12),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        shape: StadiumBorder(),
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        dense: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
