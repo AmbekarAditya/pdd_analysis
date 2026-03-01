@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/app_theme.dart';
 import '../models/daily_summary.dart';
 import '../models/train_record.dart';
 import '../controllers/daily_analysis_controller.dart';
 import '../../../shared/providers/layout_providers.dart';
-import 'train_records_screen.dart'; // Reuse specific widgets if possible, or duplicate for independence
 
 class AnalysisScreen extends ConsumerStatefulWidget {
   const AnalysisScreen({super.key});
@@ -16,7 +15,10 @@ class AnalysisScreen extends ConsumerStatefulWidget {
 }
 
 class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
-  
+  bool get _isDesktop => (kIsWeb && MediaQuery.of(context).size.width > 800) || 
+                        (Theme.of(context).platform == TargetPlatform.macOS || 
+                         Theme.of(context).platform == TargetPlatform.windows);
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +81,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                   initialDate: selectedDate,
                   firstDate: DateTime(2020),
                   lastDate: DateTime(2030),
+                  initialEntryMode: _isDesktop ? DatePickerEntryMode.input : DatePickerEntryMode.calendar,
                 );
                 if (d != null) {
                    ref.read(selectedDateProvider.notifier).setDate(d);
@@ -115,7 +118,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
           children: [
             Expanded(child: _buildSummaryCard('Movements', '${summary.totalMovements}', Icons.train, Colors.blue)),
             const SizedBox(width: 12),
-            Expanded(child: _buildSummaryCard('Total PDD', '${_formatMins(summary.totalPddMinutes)}', Icons.timer, Colors.orange)),
+            Expanded(child: _buildSummaryCard('Total PDD', _formatMins(summary.totalPddMinutes), Icons.timer, Colors.orange)),
           ],
         ),
         const SizedBox(height: 12),
@@ -168,7 +171,6 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))],
-        boxShadow: [BoxShadow(color: Theme.of(context).colorScheme.shadow.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +231,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -269,7 +271,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
                    ],
                  ),
                );
-             }).toList(),
+            }),
           ],
         ),
       ),
@@ -300,7 +302,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
     return Column(
       children: [
         Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
+        Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8))),
       ],
     );
   }
@@ -311,7 +313,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       children: [
         const Text('Detailed Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        ...summary.records.map((r) => _buildTrainRow(r)).toList(),
+        ...summary.records.map((r) => _buildTrainRow(r)),
       ],
     );
   }

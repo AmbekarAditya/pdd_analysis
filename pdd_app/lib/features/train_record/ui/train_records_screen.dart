@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/app_theme.dart';
 import '../models/train_record.dart';
 import '../models/record_filter_state.dart'; 
 import '../controllers/train_records_controller.dart'; 
@@ -124,7 +123,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
             // Department Filters (Simplified list for UI)
             ...['Operating (Traffic)', 'Mechanical (C&W)', 'Electrical (TRD / Loco)', 
                 'S&T', 'Commercial', 'Security', 'External', 'Inter-Dept']
-              .map((dept) => _buildDeptChip(dept)).toList(),
+              .map((dept) => _buildDeptChip(dept)),
           ],
         ),
       ),
@@ -237,7 +236,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: pddColor.withOpacity(0.3), width: 1),
+        side: BorderSide(color: pddColor.withValues(alpha: 0.3), width: 1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Theme(

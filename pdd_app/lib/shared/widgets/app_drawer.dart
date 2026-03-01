@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
 import 'nav_content.dart';
 
 class AppDrawer extends StatelessWidget {

@@ -156,6 +156,44 @@ class TrainRecord {
     return '${h}h ${m}m';
   }
 
+  static String formatDuration(Duration duration) {
+    final h = duration.inHours.toString().padLeft(2, '0');
+    final m = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  static String calculatePDD(String? later, String? earlier) {
+    if (later == null || earlier == null) return '0h 0m';
+    final partsLater = later.split(':');
+    final partsEarlier = earlier.split(':');
+    if (partsLater.length != 2 || partsEarlier.length != 2) return '0h 0m';
+    
+    final h1 = int.tryParse(partsLater[0]) ?? 0;
+    final m1 = int.tryParse(partsLater[1]) ?? 0;
+    final h2 = int.tryParse(partsEarlier[0]) ?? 0;
+    final m2 = int.tryParse(partsEarlier[1]) ?? 0;
+    
+    int diff = (h1 * 60 + m1) - (h2 * 60 + m2);
+    if (diff < 0) diff += 1440;
+    
+    return formatMinutes(diff);
+  }
+
+  static String calculateTotalDelay(List<String?> delays) {
+    int total = 0;
+    for (var d in delays) {
+      if (d == null || !d.contains(':')) continue;
+      final parts = d.split(':');
+      if (parts.length != 2) continue;
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      total += (h * 60 + m);
+    }
+    final h = total ~/ 60;
+    final m = total % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+  }
+
   factory TrainRecord.fromJson(Map<String, dynamic> json) => _$TrainRecordFromJson(json);
   Map<String, dynamic> toJson() => _$TrainRecordToJson(this);
   

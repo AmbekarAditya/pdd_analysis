@@ -99,7 +99,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
           value: 'HEADER_${dept.name}', 
           child: Text(
             dept.label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
@@ -167,8 +167,8 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     ref.read(appBarProvider.notifier).update(
       title: 'Add New Record',
       actions: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primary,
             child: Text('SC', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
@@ -182,6 +182,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      initialEntryMode: _isDesktop ? TimePickerEntryMode.input : TimePickerEntryMode.dial,
       builder: (context, child) {
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
@@ -305,6 +306,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
                     initialDate: _date,
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2030),
+                    initialEntryMode: _isDesktop ? DatePickerEntryMode.input : DatePickerEntryMode.calendar,
                   );
                   if (d != null) setState(() => _date = d);
                 },
