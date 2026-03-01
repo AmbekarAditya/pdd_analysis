@@ -100,30 +100,33 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
     return Container(
       height: 60,
       color: Colors.white,
-      child: ListView(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: [
-          // Date Filters
-          _buildDateChip('Today', DateFilterPreset.today),
-          _buildDateChip('Last 7 Days', DateFilterPreset.last7Days),
-          _buildDateChip('This Month', DateFilterPreset.thisMonth),
-          
-          const VerticalDivider(width: 24, indent: 8, endIndent: 8),
-          
-          // Status Filters
-          _buildStatusChip('Excluded', RecordStatusFilter.excluded),
-          _buildStatusChip('Non-Excluded', RecordStatusFilter.nonExcluded),
-          _buildStatusChip('High Delay >30', RecordStatusFilter.highDelay),
-          _buildStatusChip('Zero Delay', RecordStatusFilter.zeroDelay),
+        child: Row(
+          children: [
+            // Date Filters
+            _buildDateChip('Today', DateFilterPreset.today),
+            _buildDateChip('Last 7 Days', DateFilterPreset.last7Days),
+            _buildDateChip('This Month', DateFilterPreset.thisMonth),
+            
+            const VerticalDivider(width: 24, indent: 8, endIndent: 8),
+            
+            // Status Filters
+            _buildStatusChip('Excluded', RecordStatusFilter.excluded),
+            _buildStatusChip('Non-Excluded', RecordStatusFilter.nonExcluded),
+            _buildStatusChip('High Delay > 45', RecordStatusFilter.highDelay),
+            _buildStatusChip('Crew Time > 30', RecordStatusFilter.highCrewTime),
 
-          const VerticalDivider(width: 24, indent: 8, endIndent: 8),
+            const VerticalDivider(width: 24, indent: 8, endIndent: 8),
 
-          // Department Filters (Simplified list for UI)
-          ...['Operating (Traffic)', 'Mechanical (C&W)', 'Electrical (TRD / Loco)', 
-              'S&T', 'Commercial', 'Security', 'External', 'Inter-Dept']
-            .map((dept) => _buildDeptChip(dept)).toList(),
-        ],
+            // Department Filters (Simplified list for UI)
+            ...['Operating (Traffic)', 'Mechanical (C&W)', 'Electrical (TRD / Loco)', 
+                'S&T', 'Commercial', 'Security', 'External', 'Inter-Dept']
+              .map((dept) => _buildDeptChip(dept)).toList(),
+          ],
+        ),
       ),
     );
   }

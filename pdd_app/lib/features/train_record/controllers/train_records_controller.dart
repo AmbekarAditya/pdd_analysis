@@ -91,13 +91,12 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
           
           // A. Delay Magnitude (High vs Zero)
           final hasHighDelay = statusFilters.contains(RecordStatusFilter.highDelay);
-          final hasZeroDelay = statusFilters.contains(RecordStatusFilter.zeroDelay);
+          final hasHighCrewTime = statusFilters.contains(RecordStatusFilter.highCrewTime);
           
-          if (hasHighDelay || hasZeroDelay) {
-             final minutes = record.pddMinutes; // Use direct int
+          if (hasHighDelay || hasHighCrewTime) {
              bool matchesDelay = false;
-             if (hasHighDelay && minutes > 30) matchesDelay = true;
-             if (hasZeroDelay && minutes == 0) matchesDelay = true;
+             if (hasHighDelay && record.pddMinutes > 45) matchesDelay = true;
+             if (hasHighCrewTime && record.crewTimeMinutes > 30) matchesDelay = true;
              
              if (!matchesDelay) return false;
           }
