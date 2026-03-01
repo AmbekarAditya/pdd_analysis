@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum DateFilterPreset { all, today, last7Days, thisMonth }
-enum RecordStatusFilter { excluded, nonExcluded, highDelay, highCrewTime }
+enum RecordStatusFilter { unavoidable, avoidable, highDelay, highCrewTime }
 
 @immutable
 class RecordFilterState {

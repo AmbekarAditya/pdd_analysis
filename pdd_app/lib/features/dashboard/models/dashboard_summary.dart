@@ -14,8 +14,8 @@ class DashboardSummary {
   final int totalMovements;
   final int totalPddMinutes;
   final int avgPddMinutes;
-  final int cleanAvgPddMinutes;
-  final int excludedCount;
+  final int avoidableAvgPddMinutes;
+  final int unavoidableCount;
 
   // Analysis
   final Map<Department, double> departmentContribution; // Dept -> %
@@ -28,8 +28,8 @@ class DashboardSummary {
     required this.totalMovements,
     required this.totalPddMinutes,
     required this.avgPddMinutes,
-    required this.cleanAvgPddMinutes,
-    required this.excludedCount,
+    required this.avoidableAvgPddMinutes,
+    required this.unavoidableCount,
     required this.departmentContribution,
     required this.departmentDelay,
     required this.topReasons,
@@ -42,8 +42,8 @@ class DashboardSummary {
     totalMovements: 0, 
     totalPddMinutes: 0, 
     avgPddMinutes: 0, 
-    cleanAvgPddMinutes: 0, 
-    excludedCount: 0, 
+    avoidableAvgPddMinutes: 0, 
+    unavoidableCount: 0, 
     departmentContribution: {}, 
     departmentDelay: {}, 
     topReasons: [], 

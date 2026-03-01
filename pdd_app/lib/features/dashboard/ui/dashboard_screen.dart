@@ -146,11 +146,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             isHighlighted: true
           ),
           _buildMetricCard(
-            'Clean Avg', 
-            '${summary.cleanAvgPddMinutes}m', 
-            _getColorForPdd(summary.cleanAvgPddMinutes)
+            'Avoidable Avg', 
+            '${summary.avoidableAvgPddMinutes}m', 
+            _getColorForPdd(summary.avoidableAvgPddMinutes)
           ),
-          _buildMetricCard('Excluded', '${summary.excludedCount}', Theme.of(context).colorScheme.tertiary),
+          _buildMetricCard('Unavoidable', '${summary.unavoidableCount}', Theme.of(context).colorScheme.tertiary),
         ],
       );
     });

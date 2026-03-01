@@ -101,13 +101,13 @@ final filteredRecordsProvider = Provider<List<TrainRecord>>((ref) {
              if (!matchesDelay) return false;
           }
 
-          // B. Exclusion (Excluded vs Non-Excluded)
-          final hasExcluded = statusFilters.contains(RecordStatusFilter.excluded);
-          final hasNonExcluded = statusFilters.contains(RecordStatusFilter.nonExcluded);
+          // B. Exclusion (Unavoidable vs Avoidable)
+          final hasUnavoidable = statusFilters.contains(RecordStatusFilter.unavoidable);
+          final hasAvoidable = statusFilters.contains(RecordStatusFilter.avoidable);
           
-          if (hasExcluded && !hasNonExcluded) {
+          if (hasUnavoidable && !hasAvoidable) {
             if (!record.isExcluded) return false;
-          } else if (hasNonExcluded && !hasExcluded) {
+          } else if (hasAvoidable && !hasUnavoidable) {
             if (record.isExcluded) return false;
           }
         }
@@ -146,8 +146,8 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
   int totalMinutes = 0;
   int maxMinutes = 0;
   
-  int cleanTotalMinutes = 0;
-  int cleanCount = 0;
+  int avoidablePddSum = 0;
+  int avoidableCount = 0;
 
   for (var r in records) {
     final m = r.pddMinutes; // Direct int access
@@ -155,8 +155,8 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
     if (m > maxMinutes) maxMinutes = m;
     
     if (!r.isExcluded) {
-      cleanTotalMinutes += m;
-      cleanCount++;
+      avoidablePddSum += m;
+      avoidableCount++;
     }
   }
 
@@ -177,11 +177,10 @@ String _formatMinutes(int totalMinutes) {
   return '${h}h ${m}m';
 }
 
-class TrainRecordSummary {
   final int totalRecords;
   final String totalPdd;
   final String averagePdd; // Raw average
-  final String cleanAveragePdd; // Excluding excluded records
+  final String avoidableAveragePdd; // Excluding unavoidable records
   final String highestDelay; // Max PDD
 
   TrainRecordSummary({

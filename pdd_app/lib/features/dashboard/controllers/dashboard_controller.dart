@@ -63,9 +63,9 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
 
     // 2. Calculate Snapshots
     int totalPdd = 0;
-    int cleanPddSum = 0;
-    int cleanCount = 0;
-    int excludedCount = 0;
+    int avoidablePddSum = 0;
+    int avoidableCount = 0;
+    int unavoidableCount = 0;
     
     // Dept & Reason Maps
     final deptDelay = <Department, int>{};
@@ -75,10 +75,10 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
       totalPdd += r.pddMinutes;
       
       if (r.isExcluded) {
-        excludedCount++;
+        unavoidableCount++;
       } else {
-        cleanPddSum += r.pddMinutes;
-        cleanCount++;
+        avoidablePddSum += r.pddMinutes;
+        avoidableCount++;
       }
 
       // Dept (if valid)
@@ -91,7 +91,7 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
     }
 
     final avgPdd = (totalPdd / records.length).round();
-    final cleanAvgPdd = cleanCount > 0 ? (cleanPddSum / cleanCount).round() : 0;
+    final avoidableAvgPdd = avoidableCount > 0 ? (avoidablePddSum / avoidableCount).round() : 0;
 
     // 3. Dept Contribution
     final deptContrib = <Department, double>{};
@@ -160,10 +160,10 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
       ));
     }
 
-    // Alert: Clean Avg > 30
-    if (cleanAvgPdd > 30) {
+    // Alert: Avoidable Avg > 30
+    if (avoidableAvgPdd > 30) {
        alerts.add(DashboardAlert(
-        message: 'Clean Avg PDD is high ($cleanAvgPdd min)', 
+        message: 'Avoidable Avg PDD is high ($avoidableAvgPdd min)', 
         type: AlertType.warning
       ));
     }
@@ -194,8 +194,8 @@ final dashboardSummaryProvider = Provider<AsyncValue<DashboardSummary>>((ref) {
       totalMovements: records.length,
       totalPddMinutes: totalPdd,
       avgPddMinutes: avgPdd,
-      cleanAvgPddMinutes: cleanAvgPdd,
-      excludedCount: excludedCount,
+      avoidableAvgPddMinutes: avoidableAvgPdd,
+      unavoidableCount: unavoidableCount,
       departmentContribution: deptContrib,
       departmentDelay: deptDelay,
       topReasons: topReasons,

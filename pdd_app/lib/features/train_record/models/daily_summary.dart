@@ -5,8 +5,8 @@ class DailySummary {
   final int totalMovements;
   final int totalPddMinutes;
   final int averagePddMinutes;
-  final int cleanAveragePddMinutes;
-  final int excludedCount;
+  final int avoidableAvgPddMinutes;
+  final int unavoidableCount;
   final Map<Department, int> departmentDelayMinutes;
   final Map<Department, double> departmentContributionPercent;
   final List<MapEntry<String, int>> topSubReasons; // Reason -> Frequency or Delay? Spec says "By frequency"
@@ -17,8 +17,8 @@ class DailySummary {
     required this.totalMovements,
     required this.totalPddMinutes,
     required this.averagePddMinutes,
-    required this.cleanAveragePddMinutes,
-    required this.excludedCount,
+    required this.avoidableAvgPddMinutes,
+    required this.unavoidableCount,
     required this.departmentDelayMinutes,
     required this.departmentContributionPercent,
     required this.topSubReasons,
@@ -32,8 +32,8 @@ class DailySummary {
         totalMovements: 0,
         totalPddMinutes: 0,
         averagePddMinutes: 0,
-        cleanAveragePddMinutes: 0,
-        excludedCount: 0,
+        avoidableAvgPddMinutes: 0,
+        unavoidableCount: 0,
         departmentDelayMinutes: {},
         departmentContributionPercent: {},
         topSubReasons: [],
@@ -42,9 +42,9 @@ class DailySummary {
     }
 
     int totalPdd = 0;
-    int cleanPddSum = 0;
-    int cleanCount = 0;
-    int excluded = 0;
+    int avoidablePddSum = 0;
+    int avoidableCount = 0;
+    int unavoidableCount = 0;
     
     final Map<Department, int> deptDelay = {};
     final Map<String, int> subReasonFreq = {};
@@ -54,10 +54,10 @@ class DailySummary {
       totalPdd += pdd;
 
       if (r.isExcluded) {
-        excluded++;
+        unavoidableCount++;
       } else {
-        cleanPddSum += pdd;
-        cleanCount++;
+        avoidablePddSum += pdd;
+        avoidableCount++;
       }
 
       // Dept Contribution (Delay based)
@@ -76,7 +76,7 @@ class DailySummary {
 
     // Calculations
     final avgPdd = (totalPdd / dailyRecords.length).round();
-    final cleanAvg = cleanCount > 0 ? (cleanPddSum / cleanCount).round() : 0;
+    final avoidableAvg = avoidableCount > 0 ? (avoidablePddSum / avoidableCount).round() : 0;
     
     // Percentages
     final Map<Department, double> deptPercent = {};
@@ -96,8 +96,8 @@ class DailySummary {
       totalMovements: dailyRecords.length,
       totalPddMinutes: totalPdd,
       averagePddMinutes: avgPdd,
-      cleanAveragePddMinutes: cleanAvg,
-      excludedCount: excluded,
+      avoidableAvgPddMinutes: avoidableAvg,
+      unavoidableCount: unavoidableCount,
       departmentDelayMinutes: deptDelay,
       departmentContributionPercent: deptPercent,
       topSubReasons: top5,

@@ -113,8 +113,8 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
             const VerticalDivider(width: 24, indent: 8, endIndent: 8),
             
             // Status Filters
-            _buildStatusChip('Excluded', RecordStatusFilter.excluded),
-            _buildStatusChip('Non-Excluded', RecordStatusFilter.nonExcluded),
+            _buildStatusChip('Unavoidable', RecordStatusFilter.unavoidable),
+            _buildStatusChip('Avoidable', RecordStatusFilter.avoidable),
             _buildStatusChip('High Delay > 45', RecordStatusFilter.highDelay),
             _buildStatusChip('Crew Time > 30', RecordStatusFilter.highCrewTime),
 
@@ -213,7 +213,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
         children: [
           _buildSummaryItem('Total', '${summary.totalRecords}'),
           _buildSummaryItem('Avg PDD', summary.averagePdd),
-          _buildSummaryItem('Clean Avg', summary.cleanAveragePdd, color: Colors.green[700]),
+          _buildSummaryItem('Avoidable Avg', summary.avoidableAveragePdd, color: Colors.green[700]),
           _buildSummaryItem('Max Delay', summary.highestDelay, color: Colors.red[700]),
         ],
       ),
@@ -252,7 +252,7 @@ class _TrainRecordsScreenState extends ConsumerState<TrainRecordsScreen> {
                  Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(4)),
-                    child: Text('EXC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
+                    child: Text('UNAV', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                  ),
             ],
           ),

@@ -126,7 +126,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
           children: [
              Expanded(child: _buildSummaryCard('Avg PDD', '${summary.averagePddMinutes}m', Icons.analytics, Colors.purple)),
              const SizedBox(width: 12),
-             Expanded(child: _buildSummaryCard('Clean Avg', '${summary.cleanAveragePddMinutes}m', Icons.verified, Colors.green)),
+             Expanded(child: _buildSummaryCard('Avoidable Avg', '${summary.avoidableAvgPddMinutes}m', Icons.verified, Colors.green)),
           ],
         ),
         const SizedBox(height: 24),
@@ -279,7 +279,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
   }
 
   Widget _buildComparisonPanel(DailySummary summary) {
-    final diff = summary.averagePddMinutes - summary.cleanAveragePddMinutes;
+    final diff = summary.averagePddMinutes - summary.avoidableAvgPddMinutes;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -290,9 +290,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-           _buildCompItem('Excluded Trains', '${summary.excludedCount}', Theme.of(context).colorScheme.primary),
+           _buildCompItem('Unavoidable Trains', '${summary.unavoidableCount}', Theme.of(context).colorScheme.primary),
            Container(height: 40, width: 1, color: Theme.of(context).colorScheme.outlineVariant),
-           _buildCompItem('Impact of Exclusions', '-${diff}m Avg', Colors.green),
+           _buildCompItem('Impact of Unavoidable Delays', '-${diff}m Avg', Colors.green),
         ],
       ),
     );

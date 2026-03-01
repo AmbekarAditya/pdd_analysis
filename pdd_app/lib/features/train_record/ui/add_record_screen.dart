@@ -483,7 +483,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
            const SizedBox(width: 16),
           Expanded(
             child: _buildInfoBox(
-              'Exclude from Avg', 
+              'Unavoidable', 
               _excludeFromAvg ? 'YES' : 'NO', 
               _excludeFromAvg ? Icons.block : Icons.check_circle,
               color: _excludeFromAvg ? Theme.of(context).colorScheme.errorContainer : Theme.of(context).colorScheme.primaryContainer,
