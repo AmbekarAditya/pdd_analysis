@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../core/app_theme.dart';
+import '../../../core/constants.dart';
 import '../models/train_record.dart';
 import '../providers/record_providers.dart';
 import '../../../shared/providers/layout_providers.dart';
@@ -48,16 +50,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   Department _primaryDepartment = Department.unknown; // Enum based
 
   // Mapping from Department -> List of Sub-Reasons
-  final Map<Department, List<String>> _departmentReasonMap = {
-    Department.operating: ['Path unavailable', 'Crossing', 'Precedence', 'Platform unavailable'],
-    Department.mechanical: ['Brake binding', 'Pipe disconnection', 'Hot axle', 'Spring breakage'],
-    Department.electrical: ['OHE snap', 'Pantograph broken', 'Loco failure', 'No tension'],
-    Department.snt: ['Signal failure', 'Point failure', 'Track circuit failure'],
-    Department.commercial: ['ACP', 'Loading/Unloading', 'Parcel loading'],
-    Department.security: ['Theft', 'Agitation', 'Line patrolling'],
-    Department.external: ['Fog', 'Flood', 'Public agitation', 'Cattle run over'],
-    Department.interDept: ['Late ordering', 'Crew shortage', 'Guard shortage'],
-  };
+  final Map<Department, List<String>> _departmentReasonMap = kDepartmentReasonMap;
 
   // Reverse mapping for quick lookup: SubReason -> Department
   final Map<String, Department> _subReasonToDepartment = {};
@@ -74,6 +67,12 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   int _pddMinutes = 0; // Source of truth
   int _crewTimeMinutes = 0; // Source of truth
   bool _excludeFromAvg = false;
+
+  bool get _isDesktop {
+    if (kIsWeb && MediaQuery.of(context).size.width > 800) return true;
+    final platform = Theme.of(context).platform;
+    return platform == TargetPlatform.macOS || platform == TargetPlatform.windows || platform == TargetPlatform.linux;
+  }
 
   @override
   void initState() {
@@ -371,21 +370,26 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
         spacing: 16,
         runSpacing: 16,
         children: _timeControllers.entries.map((e) {
+          final isDesktop = _isDesktop;
           return _buildFieldContainer(
             e.key,
             160,
             TextFormField(
               controller: e.value,
-              readOnly: true,
-              onTap: () => _selectTime(e.value),
+              readOnly: !isDesktop,
+              onTap: isDesktop ? null : () => _selectTime(e.value),
               validator: (v) {
-                // strict validation can be added here
+                if (v != null && v.isNotEmpty && !v.contains(':')) return 'Use HH:MM';
                 return null;
               },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              keyboardType: TextInputType.datetime,
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 hintText: 'HH:MM',
-                prefixIcon: Icon(Icons.access_time, size: 16),
+                prefixIcon: IconButton(
+                  icon: const Icon(Icons.access_time, size: 16),
+                  onPressed: () => _selectTime(e.value),
+                ),
               ),
             ),
           );
