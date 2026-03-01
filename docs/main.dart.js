@@ -102640,7 +102640,7 @@ a5=A.a_(new A.a2(a4,new A.aK6(a0),b1),b1.h("az.E"))
 a6=A.b([],t.lG)
 a7=new A.aU(b4,new A.aK7(),A.Y(b4).h("aU<1>")).gD(0)
 if(a7>0)a6.push(new A.mY(""+a7+" trains with PDD > 2 hours",B.E9))
-if(f>30)a6.push(new A.mY("Clean Avg PDD is high ("+f+" min)",B.o1))
+if(f>30)a6.push(new A.mY("Avoidable Avg PDD is high ("+f+" min)",B.o1))
 for(b1=new A.dj(p,b3).gam(0);b1.u();){a8=b1.d
 b2=a8.b
 if(b2>=3)a6.push(new A.mY('Repeated Issue: "'+a8.a+'" ('+b2+" times)",B.o1))}if(e.a!==0){a9=new A.dj(e,e.$ti.h("dj<1,2>")).n0(0,new A.aK8())
@@ -102853,11 +102853,11 @@ q=k.A6("Total PDD",""+s.b+"m",A.o(a).ax.y)
 p=s.c
 p=k.Rp("Avg PDD",""+p+"m",k.TH(p),!0)
 o=s.d
-o=k.A6("Clean Avg",""+o+"m",k.TH(o))
+o=k.A6("Avoidable Avg",""+o+"m",k.TH(o))
 n=A.o(a).ax
 m=n.CW
 n=m==null?n.y:m
-n=A.Wd(A.b([r,q,p,o,k.A6("Excluded",""+s.e,n)],t.p),!0,!0,!0)
+n=A.Wd(A.b([r,q,p,o,k.A6("Unavoidable",""+s.e,n)],t.p),!0,!0,!0)
 return new A.ph(new A.asM(j,12,12,i),n,l,B.ar,!1,l,l,B.xj,l,!0,l,0,l,5,B.e_,B.a_,l,l,B.G,B.an,l)},
 $S:660}
 A.ayJ.prototype={
@@ -103247,7 +103247,7 @@ s=f.k1
 f=s==null?f.go:s}else{s.toString
 f=A.o(s).ax
 s=f.e
-f=s==null?f.c:s}f=r.vm("Auto Calculated",A.b([A.bR(A.b([k,B.n_,j,B.n_,A.c_(r.Rn("Exclude from Avg",h,g,i,f),1)],m),B.p,B.l,B.m,0,q)],m))
+f=s==null?f.c:s}f=r.vm("Auto Calculated",A.b([A.bR(A.b([k,B.n_,j,B.n_,A.c_(r.Rn("Unavoidable",h,g,i,f),1)],m),B.p,B.l,B.m,0,q)],m))
 i=A.b4E(!1,B.a0P,q,q,q,q,q,q,r.gaqf(),q,A.aNn(q,q,q,q,q,q,q,q,q,q,q,q,B.Kn,q,q,q,q,q,q,q))
 g=r.c
 g.toString
@@ -103491,7 +103491,7 @@ r=t.p
 s=A.bR(A.b([A.c_(h.A8("Movements",""+f,B.lN,B.ez),1),B.jt,A.c_(h.A8("Total PDD",""+B.e.cz(s,60)+"h "+B.e.aG(s,60)+"m",B.qu,B.mc),1)],r),B.p,B.l,B.m,0,g)
 f=a.d
 q=a.e
-p=A.bR(A.b([A.c_(h.A8("Avg PDD",""+f+"m",B.qp,B.Rg),1),B.jt,A.c_(h.A8("Clean Avg",""+q+"m",B.Lk,B.md),1)],r),B.p,B.l,B.m,0,g)
+p=A.bR(A.b([A.c_(h.A8("Avg PDD",""+f+"m",B.qp,B.Rg),1),B.jt,A.c_(h.A8("Avoidable Avg",""+q+"m",B.Lk,B.md),1)],r),B.p,B.l,B.m,0,g)
 o=A.nq(new A.avH(h,a))
 n=h.c
 n.toString
@@ -103506,14 +103506,14 @@ k=l.d
 l=A.w7((k==null?l.b:k).f8(0.2))
 k=h.c
 k.toString
-k=h.Rg("Excluded Trains",""+a.f,A.o(k).ax.b)
+k=h.Rg("Unavoidable Trains",""+a.f,A.o(k).ax.b)
 j=h.c
 j.toString
 j=A.o(j).ax
 i=j.to
 if(i==null){i=j.q
 j=i==null?j.k3:i}else j=i
-return A.bl(A.b([s,B.hh,p,B.cr,o,B.cr,A.dr(g,A.bR(A.b([k,A.dr(g,g,B.v,j,g,g,g,40,g,g,g,g,g,1),h.Rg("Impact of Exclusions","-"+(f-q)+"m Avg",B.md)],r),B.p,B.iQ,B.m,0,g),B.v,g,g,new A.cP(n,g,l,m,g,g,B.al),g,g,g,g,B.cg,g,g,g),B.cr,h.adx(a)],r),B.p,B.l,B.m,0,B.q)},
+return A.bl(A.b([s,B.hh,p,B.cr,o,B.cr,A.dr(g,A.bR(A.b([k,A.dr(g,g,B.v,j,g,g,g,40,g,g,g,g,g,1),h.Rg("Impact of Unavoidable Delays","-"+(f-q)+"m Avg",B.md)],r),B.p,B.iQ,B.m,0,g),B.v,g,g,new A.cP(n,g,l,m,g,g,B.al),g,g,g,g,B.cg,g,g,g),B.cr,h.adx(a)],r),B.p,B.l,B.m,0,B.q)},
 A8(a,b,c,d){var s,r,q,p,o,n,m,l=this,k=null,j=l.c
 j.toString
 j=A.o(j)
@@ -103726,7 +103726,7 @@ p=q.to
 if(p==null){p=q.q
 q=p==null?q.k3:p}else q=p
 p=t.p
-q=A.dr(n,A.bR(A.b([o.Ru("Total",""+k.a),o.Ru("Avg PDD",k.c),o.H4("Clean Avg",k.d,B.oK),o.H4("Max Delay",k.e,B.ku)],p),B.p,B.iQ,B.m,0,n),B.v,n,n,new A.cP(r,n,new A.dp(B.o,B.o,new A.aP(q,1,B.u,-1),B.o),n,n,n,B.al),n,n,n,n,B.Kg,n,n,n)
+q=A.dr(n,A.bR(A.b([o.Ru("Total",""+k.a),o.Ru("Avg PDD",k.c),o.H4("Avoidable Avg",k.d,B.oK),o.H4("Max Delay",k.e,B.ku)],p),B.p,B.iQ,B.m,0,n),B.v,n,n,new A.cP(r,n,new A.dp(B.o,B.o,new A.aP(q,1,B.u,-1),B.o),n,n,n,B.al),n,n,n,n,B.Kg,n,n,n)
 r=J.aH(l)
 if(r.gah(l))r=B.GW
 else{r=r.gD(l)
@@ -103745,7 +103745,7 @@ return A.dr(o,A.atK(o,B.d8,!1,o,!0,B.G,o,A.aPr(),p.w,o,o,o,o,o,2,A.xq(o,new A.fW
 acU(){var s,r=this,q=null,p=r.c
 p.toString
 p=A.o(p)
-s=A.b([r.H_("Today",B.Jc),r.H_("Last 7 Days",B.Jd),r.H_("This Month",B.Je),B.Dy,r.A7("Excluded",B.B7),r.A7("Non-Excluded",B.B8),r.A7("High Delay > 45",B.B9),r.A7("Crew Time > 30",B.Ba),B.Dy],t.p)
+s=A.b([r.H_("Today",B.Jc),r.H_("Last 7 Days",B.Jd),r.H_("This Month",B.Je),B.Dy,r.A7("Unavoidable",B.B7),r.A7("Avoidable",B.B8),r.A7("High Delay > 45",B.B9),r.A7("Crew Time > 30",B.Ba),B.Dy],t.p)
 B.b.T(s,new A.a2(A.b(["Operating (Traffic)","Mechanical (C&W)","Electrical (TRD / Loco)","S&T","Commercial","Security","External","Inter-Dept"],t.s),new A.aHw(r),t.bg))
 return A.dr(q,A.z_(A.bR(s,B.p,B.l,B.m,0,q),B.dD,B.EJ,q,B.aK),B.v,p.ax.k2,q,q,q,60,q,q,q,q,q,q)},
 H_(a,b){var s,r,q=this,p=null,o=q.gef().eP($.r9(),t.ao).b===b,n=A.at(a,p,p,p,p,p,p,p),m=q.c
@@ -103809,7 +103809,7 @@ q=p==null?q.k2:p
 p=A.dh(4)
 o=j.c
 o.toString
-r.push(A.dr(i,A.at("EXC",i,i,i,A.bD(i,i,A.o(o).ax.b,i,i,i,i,i,i,i,i,10,i,i,B.a0,i,i,!0,i,i,i,i,i,i,i,i),i,i,i),B.v,i,i,new A.cP(q,i,i,p,i,i,B.al),i,i,i,i,B.Kt,i,i,i))}r=A.bR(r,B.p,B.l,B.m,0,i)
+r.push(A.dr(i,A.at("UNAV",i,i,i,A.bD(i,i,A.o(o).ax.b,i,i,i,i,i,i,i,i,10,i,i,B.a0,i,i,!0,i,i,i,i,i,i,i,i),i,i,i),B.v,i,i,new A.cP(q,i,i,p,i,i,B.al),i,i,i,i,B.Kt,i,i,i))}r=A.bR(r,B.p,B.l,B.m,0,i)
 q=A.abe("MMM d").q1(a.b)
 p=j.c
 p.toString
@@ -111441,8 +111441,8 @@ B.U0=new A.as(B.jy,B.jx)
 B.mu=new A.Lh([0,0,0,0])
 B.OP=s([],A.a5("y<pX>"))
 B.U1=new A.nN("",B.kO,B.d8,B.OP)
-B.B7=new A.pX(0,"excluded")
-B.B8=new A.pX(1,"nonExcluded")
+B.B7=new A.pX(0,"unavoidable")
+B.B8=new A.pX(1,"avoidable")
 B.B9=new A.pX(2,"highDelay")
 B.Ba=new A.pX(3,"highCrewTime")
 B.U2=new A.w(-1/0,-1/0,1/0,1/0)
