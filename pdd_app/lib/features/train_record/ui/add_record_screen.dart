@@ -77,7 +77,7 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeReasonMapping();
+    // Replaced _initializeReasonMapping() with didChangeDependencies
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateAppBar();
     });
@@ -87,6 +87,13 @@ class _AddRecordScreenState extends ConsumerState<AddRecordScreen> {
     _timeControllers['Actual Departure']?.addListener(_calculateLogic);
     _timeControllers['Sign On']?.addListener(_calculateLogic);
     _timeControllers['TOC']?.addListener(_calculateLogic);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Safe to access Theme.of(context) here
+    _initializeReasonMapping();
   }
 
   void _initializeReasonMapping() {

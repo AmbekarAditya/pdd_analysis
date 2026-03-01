@@ -139,7 +139,7 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
         totalRecords: 0,
         totalPdd: '0h 0m',
         averagePdd: '0m',
-        cleanAveragePdd: '0m',
+        avoidableAveragePdd: '0m',
         highestDelay: '0h 0m');
   }
 
@@ -164,7 +164,7 @@ final recordsSummaryProvider = Provider<TrainRecordSummary>((ref) {
     totalRecords: records.length,
     totalPdd: _formatMinutes(totalMinutes),
     averagePdd: '${(totalMinutes / records.length).toStringAsFixed(0)}m',
-    cleanAveragePdd: cleanCount == 0 ? '0m' : '${(cleanTotalMinutes / cleanCount).toStringAsFixed(0)}m',
+    avoidableAveragePdd: avoidableCount == 0 ? '0m' : '${(avoidablePddSum / avoidableCount).toStringAsFixed(0)}m',
     highestDelay: _formatMinutes(maxMinutes),
   );
 });
@@ -177,6 +177,7 @@ String _formatMinutes(int totalMinutes) {
   return '${h}h ${m}m';
 }
 
+class TrainRecordSummary {
   final int totalRecords;
   final String totalPdd;
   final String averagePdd; // Raw average
@@ -187,7 +188,7 @@ String _formatMinutes(int totalMinutes) {
     required this.totalRecords,
     required this.totalPdd,
     required this.averagePdd,
-    required this.cleanAveragePdd,
+    required this.avoidableAveragePdd,
     required this.highestDelay,
   });
 }
